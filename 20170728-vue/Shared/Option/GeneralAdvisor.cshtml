@@ -1,0 +1,399 @@
+﻿@{
+    Layout = null;
+    var disabled = true;
+    var operation = (EntrustOperation)ViewBag.Operation;
+    if (operation == EntrustOperation.Surveying || operation == EntrustOperation.Evaluativeing)
+    {
+        disabled = false;
+    }
+    if (!disabled && Model.IsSuspend)
+    {
+        disabled = true;
+    }
+}
+@using Viss.Client.Manager.Html
+@using Viss.Client.Manager.Html.XButton
+@using Viss.Service.Contract.Entrust.Aritificial
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+
+<input type="hidden" id="hdDefaultAttachment" value="@Model.DefaultAttachment" />
+<input type="hidden" id="disabled" value="@disabled.ToString()" />
+<input type="hidden" id="viewUrl" value="" />
+<input type="hidden" id="editUrl" value="" />
+
+<fieldset id="propCtr">
+    <legend>询价单制作</legend>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="row">
+                <div class="col-sm-4">
+                    <input type="radio" name="DefaultAttachment" id="DefaultAttachmentForSystem" value="@DefaultAttachment.ForSystem" />系统自动生成
+                </div>
+                <div class="col-sm-8">
+                    <select type="text" class="col-sm-7" id="templete" style="margin-right: 5px;"></select>
+                    @Html.Coral().XButton(new XButtonSettings
+               {
+                   Id = "btnStore",
+                   CssClass = "btn-primary btn-sm operate-cancel btn-xs col-sm-4",
+                   Value = "生成询价单",
+               })
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <div class="row">
+                <div class="col-sm-4">
+                    <input type="radio" name="DefaultAttachment" id="DefaultAttachmentForUser" value="@DefaultAttachment.ForUser" />本地上传
+                </div>
+                <div class="col-sm-8">
+                    <a href="javascript:void(0)" class="btn btn-primary btn-sm operate-cancel btn-xs col-sm-4" id="gapickerbtn">选择文件</a>
+                    <div id="gapicker" style="display: none">选择文件</div>
+                </div>
+            </div>
+            <div id="gaFileQueue" style="margin-top: 10px;" class="row">
+            </div>
+        </div>
+        <div id="fileDiv" class="col-sm-12" style="display: none;">
+            <div>
+                <span class="fa fa-file-word-o" style="font-size: 20px;color:#5cb85c"></span>
+                <span id="fileName" value=""></span>
+                <span id="templateName"></span>
+                <input type="hidden" id="reportId" name="ReportAttachIdentity" value="@Model.ReportAttachIdentity" />
+                @Html.Coral().XButton(new XButtonSettings
+           {
+               Id = "btnEdit",
+               CssClass = "btn-primary btn-sm operate-cancel btn-xs",
+               Value = "在线编辑"
+           })
+                @Html.Coral().XButton(new XButtonSettings
+           {
+               Id = "btnView",
+               CssClass = "btn-primary btn-sm operate-cancel btn-xs",
+               Value = "报告预览"
+           })
+                @Html.Coral().XButton(new XButtonSettings
+           {
+               Id = "btnDel",
+               CssClass = "btn-primary btn-sm operate-cancel btn-xs",
+               Value = "删除"
+           })
+            </div>
+        </div>
+    </div>
+</fieldset>
+<script type="text/javascript">
+
+    var gauploader;
+    //模板
+    var gaattachmenttmp = "<div id='{fileid}' attid='{attid}' fileurl='{FileUrl}' class='col-sm-12 fileblock'>";
+    gaattachmenttmp +=
+        "    <div class='col-sm-4'><img width='{thumbnailWidth}px' height='{thumbnailHeight}px' src='{PictureThumbnailUrl}'></div>";
+    gaattachmenttmp += "    <div class='col-sm-8'>";
+    gaattachmenttmp += "        <p title='{FileName}' class='progress-p'>{FileName}</p>";
+    gaattachmenttmp += "        <p class='progress-p'>{Size}</p>";
+    //sealattachmenttmpmp+="        <p class='progress'><span style='{10}' class='progressWidth'></span><span class='progressValue'>{9}</span></p>";
+    gaattachmenttmp +=
+        "        <p style='margin-bottom: 20px;'><span style='' class='progressWidth'></span><span class='progressValue'></span></p>";
+    gaattachmenttmp += "    </div>";
+    gaattachmenttmp += "      <div class='webuploader-option' style=''>";
+    gaattachmenttmp += "      </div>";
+    gaattachmenttmp += "</div>";
+
+    $(function() {
+        coral.controls.operation.load();
+        initUploader();
+        advisorInformation.init();
+        initDisabled();
+    });
+
+    function initDisabled() {
+        $("#propCtr").find("input").each(function () {
+            $(this).attr("disabled", @(disabled?"true":"false"));
+        });
+        $("#propCtr").find("button").each(function() {
+            $(this).attr("disabled", @(disabled?"true":"false"));
+        });
+        $("#propCtr").find("a").each(function() {
+            $(this).attr("disabled", @(disabled?"true":"false"));
+        });
+        $("#propCtr").find("select").each(function() {
+            $(this).attr("disabled", @(disabled?"true":"false"));
+        });
+        if ($('#disabled').val() === 'True') {
+            $('#btnDel').hide();
+            $('#btnEdit').hide();
+            $('#btnView').removeAttr('disabled');
+            $('#gapickerbtn').unbind();
+            $("#gaFileQueue .upload-trash").hide();
+        }
+    }
+
+    function initUploader() {
+        gauploader = WebUploader.create({
+            // swf文件路径
+            //swf: '@Url.Content("~/Themes/Misc/scripts/plugin/webuploader/Uploader.swf")',
+            // 文件接收服务端。
+            server: '@Url.Action("Upload", "Attachment", new {area = "Adapter"})',
+            // 选择文件的按钮。可选。
+            // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+            pick: '#gapicker',
+            // 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+            resize: false,
+            formData: {
+                moduleName: "EntrustInformation",
+                moduleElementKey: $("#Id").val(),
+                attachmentType: 'ArtificialForUser',
+                remove:true
+            },
+            thumb: {
+                width: 70,
+                height: 70
+            }
+        });
+
+        //添加队列
+        gauploader.on('fileQueued',
+            function (file) {
+                var atthtml = gaattachmenttmp;
+                atthtml = atthtml.format({
+                    fileid: file.id,
+                    attid: '',
+                    FileUrl: '',
+                    thumbnailWidth: gauploader.options.thumb.width,
+                    thumbnailHeight: gauploader.options.thumb.height,
+                    PictureThumbnailUrl: (file.type.indexOf("image/") === -1) ? "/Themes/Misc/images/icon_qita.png" : "",
+                    FileName: file.name,
+                    Size: coral.getFileSize(file.size)
+                });
+                $('#gaFileQueue').children().remove();
+                WebUploader.extend.bindDelete(gauploader, $(atthtml).appendTo("#gaFileQueue"));
+
+                // 创建缩略图
+                gauploader.makeThumb(file,
+                    function (error, src) {
+                        var $imgdiv = $("#" + file.id + " div:first");
+                        if (error) {
+                            return;
+                        }
+                        $imgdiv.html("<img src='" + src + "'/>");
+                    },
+                    gauploader.options.thumb.width,
+                    gauploader.options.thumb.height);
+
+                gauploader.upload();
+
+                var win = parent.top.frames[parent.top.frames.length - 1];
+                win.$('#reportId').val('');
+                win.$('#fileDiv').hide();
+            });
+
+        $('#gapickerbtn').click(function () {
+            $('#DefaultAttachmentForUser').prop('checked',true);
+            $('#gapicker').find('.webuploader-element-invisible').click();
+        });
+    }
+
+    // 询价单
+    var advisorInformation = {
+        init: function() {
+            if ($('#hdDefaultAttachment').val() === 'ForSystem' || $('#hdDefaultAttachment').val() === 'None') {
+                $('input[name="DefaultAttachment"]:first').attr('checked', true);
+                this.initAdvisorView();
+            } else {
+                $('input[name="DefaultAttachment"]:last').attr('checked', true);
+                this.initLocalView();
+            }
+            this.getTemplateList();
+            this.bindTypeSwitch();
+        },
+        bindTypeSwitch: function () {
+            $('input[name="DefaultAttachment"]').change(function() {
+                var radioValue = $($('input[name="DefaultAttachment"]:checked')[0]).attr('value');
+                if (radioValue === 'ForSystem') {
+                    $('#btnStore').show();
+                    $('#gaFileQueue').children().remove();
+                    gauploader.reset();
+                    // 调api删除
+                    coral.post('/Adapter/Attachment/DelFiles?moduleName=EntrustInformation&moduleElementKey=' +
+                        $('#Id').val() +
+                        '&attachType=ArtificialForUser&description=',
+                        function(data) {
+
+                        });
+
+                } else {
+                    // 删除系统生成文件
+                    $.ajax({
+                        type: 'get',
+                        url: "/entrust/ManualInquiry/RemoveReport?id=" + $("#Id").val(),
+                        success: function () {
+                            $('#fileDiv').hide();
+                        }
+                    });
+                }
+            });
+        },
+        initAdvisorView: function () {
+            this.bindDelAdvisor();
+            if (coral.IsKong($('#reportId').val())) {
+                $('#btnStore').click(function() {
+                    advisorInformation.general();
+                });
+            } else {
+                $('#btnStore').hide();
+                this.getReportUrl();
+            }
+        },
+        initLocalView: function () {
+            $('#btnStore').click(function () {
+                advisorInformation.general();
+            });
+            //获取已经上传的本地文件
+            coral.get('/entrust/entrust/GetLocalTemplateList?id=' + '@Model.EntrustId', null, function (data) {
+                for (var i = 0; i < data.length; i++) {
+                    $('input[name="DefaultAttachment"]').prop('checked', true);
+                    var item = data[i];
+                    var atthtml = gaattachmenttmp;
+                    atthtml = atthtml.format({
+                        fileid: item.Id,
+                        attid: '',
+                        FileUrl: item.FileUrl,
+                        thumbnailWidth: gauploader.options.thumb.width,
+                        thumbnailHeight: gauploader.options.thumb.height,
+                        PictureThumbnailUrl: '/Themes/Misc/images/icon_qita.png',
+                        FileName: item.FileName,
+                        Size: coral.getFileSize(item.Size)
+                    });
+                    var $attachmenghtml=$(atthtml).appendTo("#gaFileQueue");
+                    WebUploader.extend.bindDown($attachmenghtml);
+                    //WebUploader.extend.bindDelete(gauploader,$attachmenghtml);
+                }
+
+            });
+        },
+        getReportUrl: function () {
+            $.ajax({
+                type: 'get',
+                url: "/Adapter/Attachment/GetAttachView?moduleKey=" + $('#Id').val() + "&moduleName=EntrustInformation&attachType=AssessmentTemplate",
+                success: function (res) {
+                    if (res && res.Data) {
+                        $('#btnView').click(function() {
+                            window.open(res.Data['viewUrl']);
+                        });
+                        $('#btnEdit').click(function() {
+                            window.open(res.Data['editUrl']);
+                        });
+                    }
+                }
+            });
+        },
+        getTemplateList: function() {
+            //获取模板列表
+            coral.get("/entrust/entrust/GetTemplateList?id=" + '@Model.EntrustId',
+                null,
+                function(data) {
+                    var select = $("#templete");
+                    for (var i = 0; i < data.length; i++) {
+                        select.append("<option style='width:600px;' value='" +
+                            data[i].Id +
+                            "'>" +
+                            data[i].BGMC +
+                            "</option>");
+                    }
+                });
+
+            var win = parent.top.frames[parent.top.frames.length - 1];
+            var reportId = win.$('#reportId').val();
+            if (reportId && reportId.length > 0) {
+                win.$("#fileName").text("@Model.DetailAddress" + "询价单.doc");
+                win.$('#fileDiv').show();
+            }
+        },
+        // 生成报告
+        general: function () {
+            $('#DefaultAttachmentForSystem').prop('checked',true);
+            var templateId = $("#templete").val();
+            if (typeof templateId == 'undefined' || templateId == null || templateId == '') {
+                parent.coral.toast('warning', '请选择模板!');
+                return;
+            }
+            if (!$('#appraisalform').valid()) return;
+            $('#appraisalform').submit();
+
+            $.ajax({
+                type: 'get',
+                async: false,
+                url: "/entrust/entrust/SaveReport?entrustId=" + '@Model.EntrustId' + "&templateId=" + templateId,
+                success: function (res) {
+                    if (res && res.Data) {
+                        //清除本地文件上传
+                        coral.post('/adapter/attachment/delfiles',
+                            {
+                                moduleName: "EntrustInformation",
+                                moduleElementKey: $("#Id").val(),
+                                attachType: 'ArtificialForUser'
+                            },
+                            function() {
+                                $('#gaFileQueue').children().remove();
+                            });
+
+                        var win = parent.top.frames[parent.top.frames.length - 1];
+                        win.$("#fileName").text("@Model.DetailAddress" + "询价单.doc");
+                        win.$('#fileDiv').show();
+                        parent.coral.toast('info', '生成成功.');
+                        // 绑定在线编辑url
+                        window.open(res.Data);
+                        $('#btnEdit').click(function() {
+                            window.open(res.Data);
+                        });
+                        $('#AssessSinglePrice').attr('old_value', $('#AssessSinglePrice').val());
+                        $('#btnView').hide();
+                        advisorInformation.getNewEditUrl();
+                    }
+                },
+                error: function(xhr) {
+
+                }
+            });
+        },
+        getNewEditUrl: function () {
+            // 获取新的url，因为reportId不存在
+            var getNewEditUrlInterval = setInterval(function() {
+                    $.ajax({
+                        type: 'get',
+                        async: false,
+                        url: "/entrust/ManualInquiry/GetNewEditUrl?id=" + $("#Id").val(),
+                        success: function (res) {
+                            if (res && res.Data) {
+                                clearInterval(getNewEditUrlInterval);
+                                $("#btnEdit").unbind();
+                                $('#btnEdit').click(function() {
+                                    window.open(res.Data);
+                                });
+
+                                var idIndex = res.Data.indexOf('?id='), userCodeIndex = res.Data.indexOf('&userCode=');
+                                if (idIndex === -1 || userCodeIndex === -1) return;
+                                var id = res.Data.substr(idIndex + 4, userCodeIndex - idIndex - 4);
+                                if (coral.IsKong(id)) return;
+                                // 修改reportId
+                                $('#reportId').val(id);
+                            }
+                        }
+                    });
+                },
+                5000);
+        },
+        bindDelAdvisor: function() {
+            $('#btnDel').click(function () {
+                coral.confirm('确认内容？', function (res) {
+                    if (!res) return;
+                    coral.get("/entrust/ManualInquiry/RemoveReport?id=" + $("#Id").val(), function(data) {
+                        parent.coral.toast('success', '删除成功.');
+                        location.reload();
+                    });
+                });
+            });
+        }
+    };
+
+</script>

@@ -1,0 +1,48 @@
+﻿@{
+    Layout = null;
+}
+@using Viss.Client.Manager.Html
+@using Viss.Client.Manager.Html.XButton
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+<fieldset>
+    <legend>执行操作</legend>
+    <div>
+        <div class="radio">
+            <label>
+                @Html.RadioButtonFor(c => c.IsUndoing, true)同意撤销
+            </label>
+            <label>
+                @Html.RadioButtonFor(c => c.IsUndoing, false)拒绝撤销
+            </label>
+        </div>
+    </div>
+    <div class="form-group col-sm-8">
+        <label class="control-label">备注说明</label>
+        @Html.EditorFor(c => c.SignDto.Opinion)
+    </div>
+</fieldset>
+<div style="position: fixed; bottom: 0px; width: 100%; text-align: center; background: white; border-top: 1px solid #e5e5e5; padding-top: 8px;z-index:1000">
+    @if (!Model.IsSuspend)
+    {
+        @Html.Coral().XButton(new XButtonSettings()
+        {
+        Id = "btnStore",
+        CssClass = "btn btn-primary",
+        Value = "提交",
+        DataClick = "undoingSumbit()"
+        });
+    }
+    
+</div>
+<script type="text/javascript">
+    $(function () {
+        coral.controls.operation.load();
+    });
+    function undoingSumbit() {
+        coral.post("/entrust/Quick/Undoed", $("#appraisalform").serialize(), function () {
+            parent.top.frames[0].$('#dataGrid').bootstrapTable('refresh');
+            coral.closeTopDialog();
+        });
+    }
+</script>
+

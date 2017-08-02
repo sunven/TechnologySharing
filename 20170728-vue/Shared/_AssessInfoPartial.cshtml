@@ -1,0 +1,428 @@
+﻿@{
+    Layout = null;
+    var disabled = true;
+    var operation = (EntrustOperation)ViewBag.Operation;
+    if (operation == EntrustOperation.Surveying || operation == EntrustOperation.Evaluativeing)
+    {
+        disabled = false;
+    }
+    if (!disabled && Model.IsSuspend)
+    {
+        disabled = true;
+    }
+    ViewBag.IsDisabled = disabled;
+}
+@using Viss.Service.Contract.Entrust.Aritificial
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+@using (Ajax.BeginForm("AppraisalSave", new { area = "entrust", controller = "Quick" }, new AjaxOptions { HttpMethod = "post", OnSuccess = "coral.toast('info','保存成功')" }, new { id = "appraisalform", enctype = "multipart/form-data" }))
+{
+    <div class="col-sm-6">
+        <input type="hidden" id="number" name="Number" value="@Model.Number" />
+        <input type="hidden" id="id" name="Id" value="@Model.Id" />
+        <label class="control-label">业务编号:@Model.Number</label>
+        <label class="control-label">价值时点:@Model.TimePoint.ToString("yyyy-MM-dd")</label>
+        @{
+            if (!string.IsNullOrEmpty(Model.PrevOrderInfo))
+            {
+                var info = new MvcHtmlString(Model.PrevOrderInfo);
+                @info
+            }
+        }
+
+        <fieldset @(disabled ? "disabled" : "")>
+            <legend>系统询价结果</legend>
+            <div class="row">
+                <div class="input-group">
+                    <span class="input-group-addon" id="sizing-addon1">业务详情：</span>
+                    <input type="text" id="searchBox" name="SystemAddress" class="form-control" value="@Model.SystemAddress" aria-describedby="sizing-addon1" width="120px" hiegh="30px" placeholder="">
+                    @*<select id="matchData" onchange="setMatchData()" style="width:120px;"></select>*@
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" id="searchBut" onclick="search()" type="button" style="height: 23px; line-height: 1px;">搜索</button>
+                    </span>
+                </div>
+                <div>
+                    当前系统询价结果：<span id="systemTotalPrice">@Model.SystemTotalPrice</span> 万元（单价：<span id="systemSinglePrice">@Model.SystemSinglePrice</span> 元/平方米）基准价：<span id="basicPrice">@Model.BasicPrice</span>（元/平方米）
+                </div>
+            </div>
+        </fieldset>
+        <fieldset @(disabled ? "disabled" : "")>
+            <legend>价格评估结果</legend>
+            <div class="row">
+                <div class="form-group col-sm-8">
+                    <label class="control-label">
+                        评估单价
+                        @Html.ValidationMessageFor(c => c.AssessSinglePrice)
+                    </label>
+                    @Html.EditorFor(c => c.AssessSinglePrice,new{ old_value=Model.AssessSinglePrice})
+                    <label class="control-label">
+                        评估总价
+                        @Html.ValidationMessageFor(c => c.AssessTotalPrice)
+                    </label>
+                    @Html.EditorFor(c => c.AssessTotalPrice, new { old_value = Model.AssessTotalPrice })
+                </div>
+                <div class="form-group col-sm-12">
+                    <label class="control-label">评估说明</label>
+                    @Html.EditorFor(c => c.AssessExplain)
+                </div>
+            </div>
+
+        </fieldset>
+        <fieldset @(disabled ? "disabled" : "")>
+            <legend>其他价值</legend>
+            <div class="form-group col-sm-8">
+                <label class="control-label">优先受偿款</label>
+                @Html.EditorFor(c => c.FirstCompensationPirce)
+            </div>
+            <div class="form-group col-sm-12">
+                <label class="control-label">优先受偿说明</label>
+                @Html.EditorFor(c => c.CompensationPirceExplain)
+            </div>
+            <div class="form-group col-sm-8">
+                <div id="taxLabel" style="margin-bottom: 8px">
+
+
+                    @{
+                        if (Model.IsCalcTax)
+                        {
+                            <label class="control-label">税费</label>
+                            @*@Html.EditorFor(c => c.Taxation)*@
+                            <div class="input-group">
+                                <input isdisabled="True" disabled="disabled" operation="Evaluativeing" class="form-control" id="Taxation" type="text" value="@Model.Taxation"><span class="input-group-addon">万元</span>
+                            </div>  
+                                <input type="hidden" id="TaxationDelegate" name="Taxation" value="@Model.Taxation" />
+                                <a class="btn btn-primary" href="javascript:void(0)" onclick="showTaxAnalysisDialog('@Url.Action("TaxAnalysis", "Entrust")?sourceType=1&sourceKey=@Model.Id&fromeEdit=true','系统税费分析')">系统税费分析</a>
+                                }
+                                }
+
+                            </div>
+
+                <label class="control-label">净值</label>
+                @Html.EditorFor(c => c.NetWorth)<span id="jzTip" style="color:gray">净值=评估总价-法定优先受偿款-税费总额</span>
+                <input type="hidden" value="@Model.NetWorth" name="NetWorth" id="HNetWorth" />
+            </div>
+        </fieldset>
+        @switch ((int)ViewBag.Operation)
+        {
+            case 8:
+                @Html.Partial("~/Themes/Entrust/Shared/Option/Assessing.cshtml")
+                break;
+            case 9:
+                if(Model.EntrustType == EntrustType.Advisor)
+                 {
+                     @Html.Partial("~/Themes/Entrust/Shared/Option/GeneralAdvisor.cshtml")
+                 }
+                 else if (@Model.EntrustType == EntrustType.Report)
+                 {
+                     @Html.Partial("~/Themes/Entrust/Shared/Option/Report.cshtml")
+                 }
+                @Html.Partial("~/Themes/Entrust/Shared/Option/Checking.cshtml")
+                break;
+
+            case 5:
+                @Html.Partial("~/Themes/Entrust/Shared/Option/Undoing.cshtml")
+                break;
+            case 19:
+                @Html.Partial("~/Themes/Entrust/Shared/Option/Assessing.cshtml")
+                break;
+        }
+    </div>
+
+    <div class="col-sm-6">
+        @Html.Partial("~/Themes/Entrust/Shared/_SimplifyDataTable.cshtml")
+        @Html.Partial("~/Themes/Entrust/Shared/_OperationRecordPartial.cshtml")
+    </div>
+                        }
+<script type="text/javascript">
+
+    var matchData = null;
+    var assessDialog;
+
+
+    $(function () {
+        $('#NetWorth').attr("disabled", "disabled");
+        $('#Taxation').attr("disabled", "disabled");
+        //var rules = $("#appraisalform").validate().settings.rules;
+        //rules["AssessSinglePrice"]["numrule2"] = true;
+        //rules["AssessTotalPrice"]["numrule4"] = true;
+        loadTaxMathNote();
+
+        $("#AssessSinglePrice").on("propertychange input",
+            function () {
+                var valid = $("#AssessSinglePrice").valid();
+                if (!valid) {
+                    return;
+                }
+                var singlePrice = parseFloat($(this).val());
+                if (!singlePrice) {
+                    return;
+                }
+                var floorAcreage = parseFloat($("#FloorAcreage").val());
+                if (!floorAcreage) {
+                    return;
+                }
+                var totalPrice = coral.subZeroAndDot((singlePrice * floorAcreage / 10000).toFixed(4));
+                $("#AssessTotalPrice").val(totalPrice);
+
+                calcTax();
+            });
+
+        //
+        $("#AssessTotalPrice").on("propertychange input",
+            (function () {
+                var totalPrice = parseFloat($(this).val());
+                if (!totalPrice) {
+                    return;
+                }
+                var floorAcreage = parseFloat($("#FloorAcreage").val());
+                if (!floorAcreage) {
+                    return;
+                }
+                var singlePrice = coral.subZeroAndDot((totalPrice * 10000 / floorAcreage).toFixed(2));
+                $("#AssessSinglePrice").val(singlePrice);
+
+                calcTax();
+            }));
+
+        $('#FirstCompensationPirce').on("propertychange input",
+            function () {
+
+                calcTax();
+
+            });
+
+        $('#Taxation').on("propertychange input",
+            function () {
+
+                calcTax();
+
+            });
+
+
+        var isCalTax = $('#chkistax').val();
+        if (isCalTax == 'true') {
+            $('#taxLabel').show();
+        } else {
+            $('#taxLabel').hide();
+        }
+
+
+        var systemAddress = $('#searchBox').val();
+        if (typeof systemAddress == 'undefined' || systemAddress.length == 0) {
+            $('#searchBox').val($('#DetailAddress').val());
+        }
+
+
+    });
+
+
+    function calcTax() {
+        var totalPrice = parseFloat($('#AssessTotalPrice').val());
+        if (!totalPrice) {
+            return;
+        }
+        var firstPrice = parseFloat($("#FirstCompensationPirce").val());
+        if (typeof firstPrice == 'undefined' || isNaN(firstPrice)) {
+            return;
+        }
+        var tax = 0;
+        @{
+            if (Model.IsCalcTax)
+            {
+                <text>
+        tax = parseFloat($("#Taxation").val());
+        if (typeof tax == 'undefined' || isNaN(tax)) {
+            return;
+        }
+        </text>
+            }
+        }
+
+        $('#NetWorth').val((totalPrice - firstPrice - tax).toFixed(4));
+        $('#HNetWorth').val($('#NetWorth').val());
+    }
+
+    function loadTaxMathNote() {
+        @{
+            if (Model.IsCalcTax)
+            {
+                <text>
+        $('#jzTip').text('净值=评估总价-法定优先受偿款-税费总额');
+        </text>
+            }
+            else
+            {
+                <text>
+                    $('#jzTip').text('净值=评估总价-法定优先受偿款');
+                </text>
+            }
+        }
+    }
+
+
+    function assessmentDialogShow() {
+        var html = '<div class="container">';
+        html += '</div>';
+        html += '<div class="row">';
+        html += '<form>';
+        html += '<div class="form-group col-md-12 col-sm-12 col-xs-12">';
+        html += '<label class="fomr-control">物业地址</label>';
+        html +=
+            '<select type="text" class="form-control" id="matchData"></select>';
+        html += '</div>';
+        html += '<div class="form-group col-sm-6 col-xs-6">';
+        html += '<label class="fomr-control">面积</label>';
+        html += '<input type="text" id="Area" class="form-control" value="@Model.FloorAcreage" />';
+        html += '</div>';
+        html += '<div class="form-group col-sm-6 col-xs-6">';
+        html += '<label class="fomr-control">朝向</label>';
+        html += '<select class="form-control" id="toward"></select>';
+        html += '</div>';
+        html += '<div class="form-group col-sm-6 col-xs-6">';
+        html += '<label class="fomr-control">所在楼层</label>';
+        html += '<input type="text" id="floor" class="form-control" value="" />';
+        html += '</div>';
+        html += '<div class="form-group col-sm-6 col-xs-6">';
+        html += '<label class="fomr-control">总楼层</label>';
+        html += '<input type="text" class="form-control" id="totalFloor" value="" />';
+        html += '</div>';
+        html += '<div class="form-group col-sm-6 col-xs-6">';
+        html += '<label class="fomr-control">价值时点</label>';
+        html += '<input type="text" class="form-control" id="timepoint" value="@Model.TimePoint" />';
+        html += '</div>';
+        html += '<div class="form-group col-sm-6 col-xs-6">';
+        html += '<label class="fomr-control">竣工年份</label>';
+        html += '<input type="text" class="form-control" id="completionYear" value="@Model.CompletionYear" />';
+        html += '</div>';
+        html += '</form>';
+        html += '</div>';
+        html += '<div class="row">';
+        html +=
+            '<div>当前系统询价结果：<span id="systemTotalPrice_D">@Model.SystemTotalPrice</span> 万元（单价：<span id="systemSinglePrice_D">@Model.SystemSinglePrice</span> 元/平方米）基准价：<span id="basicPrice_D">@Model.BasicPrice</span>（元/平方米）</div>';
+        html += '</div>';
+        html +=
+            '<div class="row"><button class="btn btn-primary btn-block" id="btnMakePrice" onClick="frames[1].setMatcData()">评估价格</button></div>';
+        html += '</div>';
+        assessDialog = coral.showDialog({
+            title: '系统询价',
+            html: html,
+            size: 'big'
+        });
+        assessDialog.on("shown.bs.modal",
+            function () {
+
+                coral.get('@Url.Action("GetTowardSelectList", "Entrust", new {area = "Entrust"})',
+                    function (res) {
+                        var select = parent.$("#toward");
+                        if (res && res.length > 0) {
+                            for (var i = 0; i < res.length; i++) {
+
+                                select.append("<option value='" + res[i].Text + "'>" + res[i].Text + "</option>");
+                            }
+                        }
+                    });
+
+
+                var parm = { Id: "@Model.EntrustId", Address: $("#searchBox").val() };
+                coral.post('/Entrust/Entrust/GetListByAddress',
+                    parm,
+                    function (data) {
+                        matchData = data;
+                        var m = parent.$("#matchData");
+                        if (data.length === 0) {
+                            parent.coral.toast('info', '未查询到任何物业地址.');
+                            m.children().remove();
+                            coral.closeTopDialog();
+                        }
+                        for (var i = 0; i < data.length; i++) {
+                            console.log('matchData' + i);
+                            m.append("<option style='width:600px;' value='" + i + "'>" + data[i].Address + "</option>");
+                        }
+                    });
+
+            });
+    }
+
+    function initComponent() {
+        $('#timepoint').daterangepicker({
+            singleDatePicker: true,
+            timePicker: true,
+            startDate: $('#timepoint').val(),
+            timePickerIncrement: 1,
+            timePicker24Hour: true,
+            locale: {
+                format: "YYYY-MM-DD",
+                applyLabel: '确认',
+                cancelLabel: '取消'
+            }
+
+        });
+    }
+
+    function search() {
+        assessmentDialogShow();
+        initComponent();
+
+    }
+
+    function setMatcData() {
+        if (matchData == null) {
+            parent.coral.toast('error', '没有匹配的数据!');
+            return;
+        }
+
+        if ($("#matchData").val() === "") {
+            parent.coral.toast('error', '没有匹配的数据!');
+            return;
+        }
+        var index = parent.$("#matchData").val();
+        var data = matchData[parseInt(index)];
+        if (data == null) return;
+        data.EntrustId = "@Model.EntrustId";
+        parent.coral.showWaitingDialog('正在评估价格...');
+        data.StructureArea = parent.$("#Area").val(),
+            data.Toward = parent.$("#toward").val(),
+            data.Floor = parent.$("#floor").val(),
+            data.TotalFloor = parent.$("#totalFloor").val(),
+            data.TimePoint = parent.$("#timepoint").val(),
+            data.CompletionYear = parent.$("#completionYear").val(),
+            parent.coral.post('@Url.Action("MakeSystemPrice", "Entrust", new {area = "Entrust"})',
+                data,
+                function (model) {
+                    parent.frames[1].$("#systemTotalPrice").text(model.SystemTotalPrice);
+                    parent.frames[1].$("#systemSinglePrice").text(model.SystemSinglePrice);
+                    parent.frames[1].$("#basicPrice").text(model.BasicPrice);
+
+                    parent.frames[1].$("#systemTotalPrice_D").text(model.SystemTotalPrice);
+                    parent.frames[1].$("#systemSinglePrice_D").text(model.SystemSinglePrice);
+                    parent.frames[1].$("#basicPrice_D").text(model.BasicPrice);
+
+                    parent.frames[1].$("#searchBox").val(model.SystemAddress);
+
+                    parent.coral.toast('info', '评估成功.');
+                    coral.closeTopDialog();
+                });
+    }
+
+    function showTaxAnalysisDialog(url, title) {
+        var assessSinglePrice = $('#AssessSinglePrice').val();
+        var assessTotalPrice = $('#AssessTotalPrice').val();
+
+        if (typeof assessSinglePrice == 'undefined' || typeof assessTotalPrice == 'undefined') {
+            coral.toast('error', '请输入评估单价或者评估总价!');
+            return;
+        }
+        var asp = parseFloat(assessSinglePrice);
+        var atp = parseFloat(assessTotalPrice);
+        if (asp <= 0 || atp <= 0) {
+            coral.toast('error', '请输入评估单价或者评估总价!');
+            return;
+        }
+
+        url += '&assignmentPrice=' + assessTotalPrice + '&unitPrice=' + assessSinglePrice;
+        coral.formDialog(url,
+            title,
+            600,
+            null);
+    }
+
+</script>

@@ -1,0 +1,427 @@
+﻿@{
+    Layout = null;
+}
+@using Coralcode.Framework.Contexts
+@using Viss.Client.Manager.Html
+@using Viss.Client.Manager.Html.XButton
+@using Viss.Client.Manager.Areas.Entrust.Models
+@using Viss.Service.Contract.Entrust.Aritificial
+@model EntrustModel
+
+@{
+    var disabled = "";
+    if (Model.StateType.HasFlag(EntrustStateDto.Sealed))
+    {
+        disabled = "disabled";
+    }
+    ViewBag.IsDisabled = disabled == "disabled";
+}
+
+
+<fieldset>
+    <legend>业务信息</legend>
+    <div class="form-group col-sm-3">
+        <label>贷款人：@Model.Proposer</label>
+    </div>
+    <div class="form-group col-sm-3">
+        <label class="control-label">价值时点：@Model.TimePoint</label>
+    </div>
+    <div class="form-group col-sm-3">
+        <label class="control-label">物业类型：@Model.PropertyName</label>
+    </div>
+    <div class="form-group col-sm-3">
+        <label class="control-label">物业地址：@Model.DetailAddress</label>
+    </div>
+    <div class="form-group col-sm-3">
+        <label class="control-label">建筑面积：@Model.FloorAcreage</label>
+    </div>
+    <div class="form-group col-sm-3">
+        <label class="control-label">土地面积：@Model.LandAcreage</label>
+    </div>
+    <div class="form-group col-sm-3">
+        <label class="control-label">评估单价：@Model.AssessSinglePrice</label>
+    </div>
+    <div class="form-group col-sm-3">
+        <label class="control-label">评估总价：@Model.AssessTotalPrice</label>
+    </div>
+</fieldset>
+<form id="sealForm">
+    @Html.HiddenFor(c => c.Id)
+
+    <fieldset>
+        <legend>盖章信息</legend>
+        <div class="row" @disabled>
+            <div class="form-group col-sm-3">
+                <div id="sealTypeRadioGroup" class="radio">
+                    <label>
+                        @Html.RadioButtonFor(c => c.SealType, 0)实物章
+                    </label>
+                    <label>
+                        @Html.RadioButtonFor(c => c.SealType, 1)电子章
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">盖章单据</label>
+                </div>
+                <div id="divswseal" class="@(Model.SealType != 0? "hide" : "") row clearfix" @disabled>
+                    <button type="button" id="btnSwSeal" class="btn btn-primary float-left" @disabled>上传扫描件</button>
+                    <div class="float-left">附件格式仅支持：pdf、jpg、png</div>
+                </div>
+                <div id="diveseal" class="@(Model.SealType!=1?"hide":"")" @disabled>
+                    <button type="button" id="btnESeal" class="btn btn-primary" @disabled>盖电子章</button>
+                    <div id="uploader" style="display: none;">
+                        <div class="btns">
+                            <div id="sealPicker">选择文件</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="sealFileQueue" style="margin-top: 10px;" class="row">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">所属项目:@Model.ProjectName</label>
+                </div>
+            </div>
+        </div>
+        <div class="row" @disabled>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">发送方式</label>
+                </div>
+                <div>
+                    @Html.EditorFor(item => item.SealSendType)
+                </div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">发送时间</label>
+                </div>
+                <div>@Html.EditorFor(item => item.SealSendTime, new { isToday = true, emptyContent = "暂未发送" })</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">发送份数</label>
+                </div>
+                <div>
+                    @Html.EditorFor(item => item.SealSendNumber)
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-sm-3">
+                <label class="control-label">盖章人 @(string.IsNullOrEmpty(Model.SysUserName) ? UserContext.Current.User.Name : Model.SysUserName)</label>
+            </div>
+            <div class="form-group col-sm-3">
+                <label class="control-label">盖章时间 @(Model.SealTime.HasValue ? Model.SealTime.Value.ToString("yyyy-MM-dd HH:mm:ss") : DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))</label>
+            </div>
+        </div>
+    </fieldset>
+    @if (!Model.StateType.HasFlag(EntrustStateDto.Sealed))
+    {
+        <fieldset @disabled>
+            <legend>执行操作</legend>
+            <div class="col-sm-6">
+                <div>
+                    <div class="radio">
+                        <label>
+                            <input type="radio" checked="checked" id="rdRedirectComplete" />直接完成
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <div class="checkbox">
+                        <label>
+                            <input name="" type="checkbox" checked="checked" />短信通知
+                        </label>
+                        <label>
+                            <input name="" type="checkbox" checked="checked" />邮件通知
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="control-label">提交说明</label>
+                    @Html.TextAreaFor(c => c.SignDto.Opinion, new { @class = "form-control" })
+                </div>
+            </div>
+            <div class="col-sm-6">
+                @Html.Partial("~/Themes/Entrust/Shared/_OperationRecordPartial.cshtml")
+            </div>
+
+        </fieldset>
+    }
+
+    <div class="fix-bottom-operation"></div>
+    <div class="bottom-operation">
+        @if (!Model.StateType.HasFlag(EntrustStateDto.Sealed))
+        {
+            @Html.Coral().XButton(new XButtonSettings
+       {
+           Id = "btnStore",
+           CssClass = "btn btn-primary",
+           Value = "提交盖章信息",
+           DataClick = "sealSave('Submit')"
+       })
+            @Html.Coral().XButton(new XButtonSettings
+       {
+           Id = "btnStore",
+           CssClass = "btn btn-default",
+           Value = "暂存",
+           DataClick = "sealSave('Save')"
+       })
+        }
+    </div>
+</form>
+<script type="text/javascript">
+
+    var sealUploader, globalatction;
+
+    //模板
+    var sealattachmenttmp = "<div id='{fileid}' attid='{attid}' fileurl='{FileUrl}' class='col-sm-12 fileblock'>";
+    sealattachmenttmp +=
+        "    <div class='col-sm-4'><img width='{thumbnailWidth}px' height='{thumbnailHeight}px' src='/Themes/Misc/images/icon_qita.png'></div>";
+    sealattachmenttmp += "    <div class='col-sm-8'>";
+    sealattachmenttmp += "        <p title='{FileName}' class='progress-p'>{FileName}</p>";
+    sealattachmenttmp += "        <p class='progress-p'>{Size}</p>";
+    //sealattachmenttmpmp+="        <p class='progress'><span style='{10}' class='progressWidth'></span><span class='progressValue'>{9}</span></p>";
+    sealattachmenttmp +=
+        "        <p style='margin-bottom: 20px;'><span style='' class='progressWidth'></span><span class='progressValue'></span></p>";
+    sealattachmenttmp += "    </div>";
+    sealattachmenttmp += "      <div class='webuploader-option' style=''>";
+    sealattachmenttmp += "      </div>";
+    sealattachmenttmp += "</div>";
+
+    $(function() {
+        coral.controls.operation.load();
+        initPage();
+        bindSealAttachment();
+    });
+
+    function initPage() {
+        $("#sealTypeRadioGroup :radio").change(function() {
+            var value = $(this).val();
+            if (value === "0") {
+                //实物
+                $("#divswseal").removeClass("hide");
+                $("#diveseal").addClass("hide");
+                $("#sealFileQueue").removeClass("hide");
+            } else if (value === "1") {
+                //电子
+                $("#diveseal").removeClass("hide");
+                $("#divswseal").addClass("hide");
+                $("#sealFileQueue").addClass("hide");
+            }
+            return;
+        });
+
+        initSealWebUploader();
+
+        $("#btnSwSeal").click(function() {
+            $("#diveseal").find(".webuploader-element-invisible").click();
+        });
+
+        $("#btnESeal").click(function () {
+
+            bootbox.dialog({
+                size: 'small',
+                title: '提示',
+                message: '请选择"盖章控件"',
+                buttons: {
+                    king: {
+                        label: "金格",
+                        className: 'btn-primary',
+                        callback: function () {
+                            window.open('@Url.Action("ESeal", "SealOrder")' + "?Id=@Model.EntrustId");
+                        }
+                    },
+                    dianju: {
+                        label: "点聚",
+                        className: 'btn-info',
+                        callback: function () {
+                            window.open('@Url.Action("DSeal", "SealOrder")' + "?Id=@Model.EntrustId");
+                        }
+                    }
+                }
+            });
+
+
+        });
+
+        if ('@disabled' == 'disabled') {
+            $('input[name="SealType"]').attr('disabled', 'disabled');
+            $('#btnSwSeal').attr('disabled', 'disabled');
+            $('#SealSendType').attr('disabled', 'disabled');
+            $('#SealSendTime').attr('disabled', 'disabled');
+            $('#SealSendNumber').attr('disabled', 'disabled');
+        }
+    }
+
+    function initSealWebUploader() {
+        sealUploader = WebUploader.create({
+            // swf文件路径
+            swf: '@Url.Content("~/Themes/Misc/scripts/plugin/webuploader/Uploader.swf")',
+            // 文件接收服务端。
+            server: '@Url.Action("Upload", "Attachment", new { area = "Adapter" })',
+            // 选择文件的按钮。可选。
+            // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+            pick: '#sealPicker',
+            // 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+            resize: false,
+            formData: {
+                moduleName: "EntrustInformation",
+                moduleElementKey: $("#Id").val(),
+                attachmentType: "ArtificialForElecSeal"
+                //moduleElementKey: '9008766718256873536'
+            },
+            accept: [{
+                title: 'Images',
+                extensions: 'jpg,jpeg,png',
+                mimeTypes: 'image/*'
+            }, {
+                title: 'Pdf',
+                extensions: 'pdf',
+                mimeTypes: 'application/pdf'
+            }],
+            thumb: {
+                width: 70,
+                height:70
+            }
+        });
+
+        //添加队列
+        sealUploader.on('fileQueued',
+            function(file) {
+                //
+
+                var atthtml = sealattachmenttmp;
+                atthtml = atthtml.format({
+                    fileid: file.id,
+                    attid: '',
+                    FileUrl: '',
+                    thumbnailWidth: sealUploader.options.thumb.width,
+                    thumbnailHeight: sealUploader.options.thumb.height,
+                    PictureThumbnailUrl: (file.type.indexOf("image/") === -1) ? "/Themes/Misc/images/icon_qita.png": "",
+                    FileName: file.name,
+                    Size: coral.getFileSize(file.size)
+                });
+                WebUploader.extend.bindDelete(sealUploader,$(atthtml).appendTo("#sealFileQueue"));
+
+                //
+                // 创建缩略图
+                sealUploader.makeThumb(file,
+                    function(error, src) {
+                        var $imgdiv = $("#" + file.id + " div:first");
+                        if (error) {
+                            return;
+                        }
+                        $imgdiv.html("<img src='/Themes/Misc/images/icon_qita.png'/>");
+                    },
+                    sealUploader.options.thumb.width,
+                    sealUploader.options.thumb.height);
+            });
+
+        sealUploader.on('uploadFinished', function () {
+            saveOrSubmit();
+        });
+    }
+
+    var bindSealAttachment = function () {
+
+        @{
+            if (Model.SealType.HasValue&&Model.SealType.Value==1)
+        {
+            //电子章
+            <text>
+                coral.post("@Url.Action("GetReportFiles", "Attachment", new { area = "Adapter" })",
+                    { moduleName: 'EntrustInformation', moduleElementKey: $("#Id").val(), attachType: "ArtificialForElecSeal" },
+                    function(data) {
+                        for (var i = 0; i < data.length; i++) {
+                            var item = data[i];
+                            var atthtml = sealattachmenttmp;
+                            atthtml = atthtml.format({
+                                fileid: '',
+                                attid: item.Id,
+                                FileUrl: item.FileUrl,
+                                thumbnailWidth: sealUploader.options.thumb.width,
+                                thumbnailHeight: sealUploader.options.thumb.height,
+                                PictureThumbnailUrl: item.PictureThumbnailUrl,
+                                FileName: item.FileName,
+                                Size: coral.getFileSize(item.Size)
+                            });
+                            var $atthtml = $(atthtml).appendTo("#sealFileQueue");
+                            WebUploader.extend.bindDown($atthtml);
+                            if ('@disabled' != 'disabled') {
+                                var url = '@Url.Action("Delete", "Attachment", new {area = "Adapter"})?id=' + item.Id;
+                                WebUploader.extend.bindDelete(sealUploader,$atthtml, url);
+                            }
+                        }
+                    });
+            </text>
+        }
+        else
+        {
+            <text>
+                coral.post("@Url.Action("GetReportFiles", "Attachment", new { area = "Adapter" })",
+                    { moduleName: 'EntrustInformation', moduleElementKey: $("#Id").val(), attachType: "ArtificialForElecSeal" },
+                    function(data) {
+                        for (var i = 0; i < data.length; i++) {
+                            var item = data[i];
+                            var atthtml = sealattachmenttmp;
+                            atthtml = atthtml.format({
+                                fileid: '',
+                                attid: item.Id,
+                                FileUrl: item.FileUrl,
+                                thumbnailWidth: sealUploader.options.thumb.width,
+                                thumbnailHeight: sealUploader.options.thumb.height,
+                                PictureThumbnailUrl: item.PictureThumbnailUrl,
+                                FileName: item.FileName,
+                                Size: coral.getFileSize(item.Size)
+                            });
+                            var $atthtml = $(atthtml).appendTo("#sealFileQueue");
+                            WebUploader.extend.bindDown($atthtml);
+                            if ('@disabled' != 'disabled') {
+                                var url = '@Url.Action("Delete", "Attachment", new {area = "Adapter"})?id=' + item.Id;
+                                WebUploader.extend.bindDelete(sealUploader,$atthtml, url);
+                            }
+
+                        }
+                    });
+            </text>
+        }
+        }
+
+
+
+    }
+
+    function uploadFinishedCallBack() {
+
+    }
+
+    function sealSave(atction) {
+
+        globalatction = atction;
+        sealUploader.upload();
+    }
+
+    function saveOrSubmit() {
+        var url;
+        if (globalatction === "Save") {
+            url = "@Url.Action("SealSave", "SealOrder")";
+        } else if (globalatction === "Submit") {
+            url = "@Url.Action("SealSubmit", "SealOrder")";
+        } else {
+            return;
+        }
+        coral.post(url, $("#sealForm").serialize(), function (data) {
+            coral.global.iframeBody.formSubmit();
+            coral.closeModal();
+        },'提交成功.');
+    }
+</script>

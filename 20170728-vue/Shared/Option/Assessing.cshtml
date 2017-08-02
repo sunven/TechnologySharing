@@ -1,0 +1,260 @@
+﻿@using Viss.Client.Manager.Html
+@using Viss.Client.Manager.Html.XButton
+@using Viss.Service.Contract.Entrust.Aritificial
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+@{
+    Layout = null;
+    var disabled = true;
+    var operation = (EntrustOperation)ViewBag.Operation;
+    if (operation == EntrustOperation.Surveying || operation == EntrustOperation.Evaluativeing)
+    {
+        disabled = false;
+    }
+    if (!disabled && Model.IsSuspend)
+    {
+        disabled = true;
+    }
+}
+@if (Model.EntrustType == EntrustType.Advisor)
+{
+    @Html.Partial("~/Themes/Entrust/Shared/Option/GeneralAdvisor.cshtml")
+}
+else if (Model.EntrustType == EntrustType.Report)
+{
+    @Html.Partial("~/Themes/Entrust/Shared/Option/Report.cshtml")
+}
+
+<fieldset @(disabled ? "disabled" : "")>
+    <legend>执行操作</legend>
+    <div class="row">
+        <div class="radio col-sm-12">
+            <div class="row">
+                @if (Model.EntrustType != EntrustType.Report)
+                {
+                    <div class="col-sm-4">
+                        <label>
+                            @Html.RadioButtonFor(c => c.CompleteOrCheck, true)直接完成
+                        </label>
+                    </div>
+                }
+
+                <div class="col-sm-4">
+                    <label>
+                        <input type="radio" checked="" name="CompleteOrCheck" id="CompleteOrCheck_Audit" />
+                        提交审核
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group col-sm-12">
+            <input type="hidden" id="sysOrgId" name="SignDto.SysOrgId" />
+            <input type="hidden" id="sysOrgName" name="SignDto.SysOrgName" />
+            <input type="hidden" id="sysUserId" name="SignDto.SysUserId" />
+            <input type="hidden" id="sysUserName" name="SignDto.SysUserName" />
+            <div class="col-sm-12" id="audit_people">
+                <label class="control-label"><i>*</i>审核人员</label>
+                <div style="position: relative;">
+                    <input type="Text" class="form-control" id="orgText" readonly style="background-color: #fff; padding-right: 35px;" />
+                    <span class="caret" style="position: absolute; right: 10px; top: 40%;"></span>
+                </div>
+                <div id="assessingSysOrg" class="treecontainer">
+                    <ul id="orgTree" class="ztree ultree"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="form-group col-sm-12" id="audit_opr">
+            <div class="col-sm-4">
+                @Html.CheckBoxFor(c => c.NotifyDto.IsSendSms, true)短息提醒作业人员
+            </div>
+            <div class="col-sm-6">
+                @Html.CheckBoxFor(c => c.NotifyDto.IsSendEmail, true)邮件通知
+            </div>
+        </div>
+    </div>
+
+
+    <div class="form-group col-sm-12">
+        <label class="control-label">提交说明</label>
+        @Html.EditorFor(c => c.SignDto.Opinion)
+    </div>
+</fieldset>
+<div class="fix-bottom-operation"></div>
+<div class="bottom-operation">
+    @if (!Model.IsSuspend && !disabled)
+    {
+        @Html.Coral().XButton(new XButtonSettings()
+   {
+       Id = "btnStore",
+       CssClass = "btn btn-primary",
+       Value = "提交价格评估",
+       DataClick = "appraisalSumbit()"
+   })
+        @Html.Coral().XButton(new XButtonSettings()
+   {
+       Id = "btnSave",
+       CssClass = "btn btn-default",
+       Value = "暂存",
+       Type = "submit"
+   })
+    }
+
+</div>
+
+<script type="text/javascript">
+    $(function () {
+        coral.controls.operation.load();
+        zTreeLoding();
+
+        $('input[name="CompleteOrCheck"]').change(function () {
+            if ($(this).attr('id') == 'CompleteOrCheck') {
+                $('#CompleteOrCheck_Audit').removeAttr('checked');
+                $('#CompleteOrCheck').attr('checked', 'checked');
+                $('#audit_people').hide();
+                $('#audit_opr').hide();
+            } else {
+                $('#CompleteOrCheck').removeAttr('checked');
+                $('#CompleteOrCheck_Audit').attr('checked', 'checked');
+                $('#audit_people').show();
+                $('#audit_opr').show();
+            }
+        });
+
+        @if (Model.EntrustType == EntrustType.Report)
+        {
+            <text>
+                $('#CompleteOrCheck').removeAttr('checked');
+                $('#CompleteOrCheck_Audit').attr('checked', 'checked');
+                $('#audit_people').show();
+                $('#audit_opr').show();
+            </text>
+        }
+        else
+        {
+            <text>
+                $('#CompleteOrCheck').attr('checked', 'checked');
+                $('#NotifyDto_IsSendSms').attr('checked', 'checked');
+                $('#NotifyDto_IsSendEmail').attr('checked', 'checked');
+                $('#audit_people').hide();
+                $('#audit_opr').hide();
+            </text>
+        }
+    });
+
+    // 验证值必须大于特定值(不能等于)
+    jQuery.validator.addMethod("gt", function (value, element, param) {
+        return value > param;
+    }, $.validator.format("输入值必须大于{0}!"));
+
+    //提交评估
+    function appraisalSumbit() {
+        if (!$('#appraisalform').valid()) {
+            return;
+        }
+
+        // 非询价单直接保存
+        if ('@(Model.EntrustType != EntrustType.Advisor)'==='True') {
+            submitForm();
+            return;
+        }
+        
+        if (coral.IsKong($('#reportId').val())) {
+            submitForm();
+            return;
+        }
+        
+        var $unitPrice = $('#AssessSinglePrice');
+        if ($unitPrice.attr('old_value') !== '0' && $unitPrice.val() !== $unitPrice.attr('old_value')) {
+            coral.confirm('确认修改价格？修改后现询价单作废，需重新生成。',
+                function(res) {
+                    if (res) {
+                        $('#appraisalform').submit();
+                        delReport();
+                        return;
+                    }
+                    location.reload();
+                });
+        } else {
+            submitForm();
+        }
+    }
+
+    // 删除报告
+    function delReport() {
+        $.ajax({
+            type: 'get',
+            url: "/entrust/ManualInquiry/RemoveReport?id=" + $("#Id").val(),
+            async: false,
+            success: function(res) {
+                if (res && res.State === 0)
+                    parent.coral.toast('success', '删除成功.');
+                else
+                    parent.coral.toast('error', '删除失败.');
+                location.reload();
+            }
+        });
+    }
+
+    // 提交
+    function submitForm() {
+        if ($('#CompleteOrCheck').attr('checked') == 'checked') {
+            //直接完成
+            coral.post('/entrust/Quick/EvaluativeToComplete', $("#appraisalform").serialize(), function (res) {
+                coral.closeAllDialog();
+                coral.refreshDataGrid();
+            });
+            return;
+        }
+
+        var test = $("#orgText").val();
+        if (typeof test == 'undefined'||test==null || test == '') {
+            coral.toast('warning', '请选择审核人!');
+            return;
+        }
+
+        coral.post('/entrust/Quick/AppraisalSumbit', $("#appraisalform").serialize(),function(res) {
+            coral.closeAllDialog();
+            coral.refreshDataGrid();
+        });
+    }
+
+    var assessingTree;
+    function assessingTreeChecked(e, treeId, treeNode) {
+
+        if (!treeNode.checked) {
+            $("#sysOrgId").val('');
+            $("#sysOrgName").val('');
+            $("#sysUserId").val("");
+            $("#sysUserName").val("");
+            $("#orgText").val('');
+        } else {
+            if (treeNode.isOrg) {
+                $("#sysOrgId").val(treeNode.id);
+                $("#sysOrgName").val(treeNode.name);
+                $("#sysUserId").val("");
+                $("#sysUserName").val("");
+                $("#orgText").val(treeNode.name);
+            } else {
+                var parent = treeNode.getParentNode();
+                $("#sysOrgId").val(parent.id);
+                $("#sysOrgName").val(parent.name);
+                $("#sysUserId").val(treeNode.id);
+                $("#sysUserName").val(treeNode.name);
+                $("#orgText").val(parent.name + "-" + treeNode.name);
+            }
+        }
+
+
+        assessingTree.hideMenu();
+    }
+
+
+    function zTreeLoding() {
+        coral.get("/Entrust/Entrust/GetOrgTree", function (data) {
+            $.fn.zTree.init($("#orgTree"), $.extend({}, { callback: { onCheck: assessingTreeChecked } }, $.ztreeExtend.defaultSettings), data);
+            assessingTree = $.ztreeExtend.init({
+                postion: "orgText",
+                container: "assessingSysOrg"
+            });
+        });
+    }
+</script>

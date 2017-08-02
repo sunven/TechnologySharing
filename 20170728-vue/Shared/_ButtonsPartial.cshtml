@@ -1,0 +1,652 @@
+﻿@*
+    用于可更多button按钮的初始化
+    1、buttons为按钮集合
+    ---第一个为正常按钮
+    ---第二个为链接按钮(用于更多中呈现)*取消该用法
+*@
+
+@{
+    Layout = null;
+}
+@using Viss.Client.Manager.Html
+@using Viss.Client.Manager.Html.XButton
+
+<script type="text/javascript">
+
+    //#region 初始化Action Url
+    @{
+        var confirmSupplementaryEntrust = Url.Action("ConfirmSupplementary", "Entrust", new {area = "Entrust"});
+        var cancelEntrust = Url.Action("Cancel", "Entrust", new {area = "Entrust"});
+        var unableEntrust = Url.Action("Unable", "Entrust", new {area = "Entrust"});
+        var rejectEntrust = Url.Action("Reject", "Entrust", new { area = "Entrust" });
+        var createEntrust = Url.Action("Create", "EntrustOwn", new {area = "Entrust"});
+        var applySealEntrust = Url.Action("ApplySeal", "EntrustOwn", new { area = "Entrust" });
+        var signCenter = Url.Action("Assign", "AssignCenter", new {area = "Entrust"});
+        var supplementAttachmentSealOrder = Url.Action("SupplementAttachment", "SealOrder");
+        var deleteEntrust = Url.Action("Delete", "EntrustOwn", new {area = "Entrust"});
+        var sealEntrust= Url.Action("Detail", "SealOrder");
+        var supplementaryingEntrust = Url.Action("Create","EntrustOwn");
+        var entrustDetail = Url.Action("Detail", "Quick", new { area = "Entrust" });
+        var downloadSnapShot = Url.Action("DownloadSnapShot","Entrust");
+        var viewResult = Url.Action("TaxAnalysis", "Entrust");
+        var modifyPrice = Url.Action("ModifyPrice", "Entrust");
+    }
+
+    var actionUrls = {
+        getOrgTreeUrl: '\'@Url.Action("GetOrgTree", "Entrust", new {area = "Entrust"})\'',
+        undoCommitUrl: '\'@Url.Action("Reback", "Entrust", new {area = "Entrust"})\'',
+        allocateCommitUrl: '\'@Url.Action("ReAllocate", "Entrust", new {area = "Entrust"})\''
+    };
+
+    //#endregion
+
+
+    //#region 初始化buttons集合
+
+    var buttons = {
+        Supplementary:
+        [
+            //申请补充资料
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "申请补充资料", CssClass = "btn-link btn-sm btn-xs", DataUrl = confirmSupplementaryEntrust, DataTag = "{id}", DataPrompt = "确认需“补充资料”？", DataPromptLabel = "*提交意见", DataCallbackFunction = "$('#dataGrid').bootstrapTable('refresh')"})',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "补充资料", CssClass = "btn-link", DataUrl = confirmSupplementaryEntrust, DataTag = "{id}", DataPrompt = "确认需“补充资料”？", DataPromptLabel = "*提交意见", DataCallbackFunction = "$('#dataGrid').bootstrapTable('refresh')"})'
+        ],
+        Undo:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "退回", CssClass = "btn-link btn-sm btn-xs", DataClick = "rebackDialog({state},{getOrgTreeUrl},\'{id}\',{undoCommitUrl})" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "退回", CssClass = "btn-link", DataClick = "rebackDialog({state},{getOrgTreeUrl},\'{id}\',{undoCommitUrl})" })'
+        ],
+        Allocate:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "分配", CssClass = "btn-link btn-sm btn-xs", DataClick = "allocateDialog({state},{getOrgTreeUrl},\'{id}\',{allocateCommitUrl})" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "分配", CssClass = "btn-link", DataClick = "allocateDialog({state},{getOrgTreeUrl},\'{id}\',{allocateCommitUrl})" })'
+        ],
+        Cancel:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "撤销", CssClass = "btn-link btn-sm btn-xs", DataUrl = cancelEntrust + "?id={id}", DataPrompt = "确认撤销此业务？", DataPromptLabel = "*撤销原因", DataCallbackFunction = "$('#dataGrid').bootstrapTable('refresh')" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "撤销", CssClass = "btn-link", DataUrl = cancelEntrust + "?id={id}", DataPrompt = "确认撤销此业务？", DataPromptLabel = "*撤销原因"})'
+        ],
+        Unable:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "无法评估", CssClass = "btn-link btn-sm btn-xs", DataUrl = unableEntrust + "?id={id}", DataPrompt = "确认此业务“无法评估”？", DataPromptLabel = "*原因"})',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "无法评估", CssClass = "btn-link", DataUrl = unableEntrust + "?id={id}", DataPrompt = "确认此业务“无法评估”？", DataPromptLabel = "*原因"})'
+        ],
+        Agree:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "同意", CssClass = "btn-link btn-sm btn-xs", DataClick = "agreeCancel(\'{id}\')" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "同意", CssClass = "btn-link", DataClick = "agreeCancel(\'{id}\')" })'
+        ],
+        Reject:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "拒绝", CssClass = "btn-link btn-sm btn-xs", DataUrl = rejectEntrust + "?id={id}", DataPrompt = "确认“拒绝”撤销业务？", DataPromptLabel = "*原因", DataCallbackFunction = "$('#dataGrid').bootstrapTable('refresh')" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "拒绝", CssClass = "btn-link", DataUrl = rejectEntrust + "?id={id}", DataPrompt = "确认“拒绝”撤销业务？", DataPromptLabel = "*原因"})'
+        ],
+        Chat:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "沟通", CssClass = "btn-link btn-sm btn-xs", DataClick = "showChat(\'{id}\')" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "沟通", CssClass = "btn-link", DataClick = "showChat(\'{id}\')" })'
+        ],
+        Survey:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "查勘", CssClass = "btn-link btn-sm btn-xs", DataClick = "showDialog(\'" + entrustDetail + "?id={id}&operation={operation}\','{number}')" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "查勘", CssClass = "btn-link", DataClick = "showDialog(\'" + entrustDetail + "?id={id}&operation={operation}\','{number}')" })'
+        ],
+        Seal:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "盖章", CssClass = "btn-link btn-sm btn-xs", DataClick = "showDialog(\'" + sealEntrust + "?id={id}&operation={operation}\','{number}')" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "盖章", CssClass = "btn-link", DataClick = "showDialog(\'" + sealEntrust + "?id={id}&operation={operation}\','{number}')" })'
+        ],
+        Evaluate:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "评估", CssClass = "btn-link btn-sm btn-xs", DataClick = "showDialog(\'" + entrustDetail + "?id={id}&operation={operation}\','{number}')" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "评估", CssClass = "btn-link", DataClick = "showDialog(\'" + entrustDetail + "?id={id}&operation={operation}\','{number}')" })'
+        ],
+        Check:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "审核", CssClass = "btn-link btn-sm btn-xs", DataClick = "showDialog(\'" + entrustDetail + "?id={id}&operation={operation}\','{number}')" })',
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "审核", CssClass = "btn-link", DataClick = "showDialog(\'" + entrustDetail + "?id={id}&operation={operation}\','{number}')" })'
+        ],
+        More:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "更多", CssClass = "btn-link btn-sm btn-xs", DataClick = "showMoreMenu(event,'{0}','{1}')"})',
+            '@Html.Coral().XButton(new XButtonSettings() { Value = "更多", CssClass = "btn-link", DataClick = "showMoreMenu(event,'{0}','{1}')" })'
+        ],
+        Modify:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "编辑", CssClass = "btn-link btn-sm btn-xs", DataClick = "showDialog(\'" + createEntrust + "?id={id}&operation={operation}\','{number}')" })', ''
+        ],
+        View:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "查看", CssClass = "btn-link btn-sm btn-xs", DataClick = "showDialog(\'" + entrustDetail + "?id={id}&operation={operation}\','{number}')" })', ''
+        ],
+        Delete: [
+            '@Html.Coral().XButton(new XButtonSettings(){Value = "删除", CssClass = "btn btn-link btn-xs", DataUrl = deleteEntrust + "?id={id}",DataConfirm = "确认删除此任务？", DataCallbackFunction = "$('#dataGrid').bootstrapTable('refresh')"})', ''
+        ],
+        Sealing:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() {Value = "申请盖章", CssClass = "btn-link btn-sm btn-xs", DataClick = "applySeal(\'{id}\',\'" + applySealEntrust + "\',\'"+ supplementAttachmentSealOrder + "\')" })', ''
+        ],
+        //补充资料
+        Supplementarying:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() { Value = "补充资料", CssClass = "btn-link btn-sm btn-xs", DataClick = "showDialog(\'" + supplementaryingEntrust + "?id={id}&operation={operation}\','{number}')" })', ''
+        ],
+        // 重新分配
+        ReAllocate:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() { Value = "重新分配", CssClass = "btn-link btn-sm btn-xs", DataClick = "startAllocateDialog({state},{getOrgTreeUrl},\'{id}\',{allocateCommitUrl})" })', ''
+        ],
+        //抢单
+        Assign:
+        [
+            '@Html.Coral().XButton(new XButtonSettings() { Value = "抢单", CssClass = "btn-link btn-sm btn-xs", DataUrl = signCenter, DataTag = "{id}",
+            DataConfirm = "确认抢单“{DetailAddress}”任务？",
+            DataCallbackFunction = "$('#dataGrid').bootstrapTable('refresh')"
+        })',''
+        ],
+        DownSnapShot: [
+            '@Html.Coral().XButton(new XButtonSettings(){Value = "下载快照",CssClass = "btn-link btn-sm btn-xs",DataClick = "window.open(\""+downloadSnapShot+"?id={id}\")" })',''
+        ],
+        AnalysisOFinanciaLiquidity: [
+            '@Html.Coral().XButton(new XButtonSettings() { Value = "变现分析", CssClass = "btn-link btn-sm btn-xs", DataClick = "showDialog(\'" + viewResult + "?sourceType=1&sourceKey={id}&fromeEdit=true&assignmentPrice=0&unitPrice=0\','变现分析')" })',''
+        ],
+        PriceAdjustment: [
+            '@Html.Coral().XButton(new XButtonSettings(){Value = "价格调整",DataTag = "{id}",CssClass = "btn btn-link btn-xs", DataUrl = modifyPrice,DataPrompt = "确认此业务需“价格调整”？", DataPromptLabel = "*提交意见", DataCallbackFunction = "$('#dataGrid').bootstrapTable('refresh')"})', ''
+        ]
+    };
+
+    //#endregion
+
+    //正常按钮集合
+    var initButtons = [];
+    //更多按钮集合,格式{_id:[按钮集合]}
+    var initMoreButtons = {};
+    //指定超过多少个按钮后显示更多按钮
+    var btnMoreCount = 3;
+
+    /**
+     * 清除按钮存储集合
+     */
+    function clearButtons() {
+        initButtons = [];
+        initMoreButtons = {};
+    }
+
+    function buildButtonsFactory(row, formatData) {
+        //debugger;
+        formatData = $.extend(actionUrls, formatData);
+
+        var operations = row['Operation'];
+        var value = row["Id"];
+        if (typeof operations != 'undefined') {
+            $.each(operations,function() {
+                var operation = parseInt(this);
+
+                switch (operation) {
+                case 1:
+                    pushButton(buttons.Modify[0], value, operation);
+                    break;
+                case 2:
+                    pushButton(buttons.Delete[0], value, operation);
+                    break;
+                case 3:
+                case 4:
+                    pushButton(buttons.Cancel[0], value, operation);
+                    break;
+                case 5:
+                    pushButton(buttons.Agree[0], value, operation);
+                    break;
+                case 6:
+                    pushButton(buttons.Reject[0], value, operation);
+                    break;
+                case 7:
+                    pushButton(buttons.Survey[0], value, operation);
+                    break;
+                case 8:
+                    pushButton(buttons.Evaluate[0], value, operation);
+                    break;
+                case 9:
+                    pushButton(buttons.Check[0], value, operation);
+                    break;
+                case 10:
+                    pushButton(buttons.Sealing[0], value, operation);
+                    break;
+                case 11:
+                    pushButton(buttons.Seal[0], value, operation);
+                    break;
+                case 12:
+                    pushButton(buttons.Supplementary[0], value, operation);
+                    break;
+                case 13:
+                    pushButton(buttons.Supplementarying[0], value, operation);
+                    break;
+                case 14:
+                    pushButton(buttons.Unable[0], value, operation);
+                    break;
+                case 15:
+                    pushButton(buttons.Allocate[0], value, operation);
+                    break;
+                case 16:
+                    pushButton(buttons.Assign[0], value, operation);
+                    break;
+                case 17:
+                    pushButton(buttons.Chat[0], value, operation);
+                    break;
+                case 18:
+                    pushButton(buttons.Undo[0], value, operation);
+                    break;
+                case 19:
+                    pushButton(buttons.View[0], value, operation);
+                    break;
+                case 20:
+                    pushButton(buttons.ReAllocate[0], value, operation);
+                    break;
+
+                case 21:
+                        var converterButtons = row['ConverterButtons'];
+                        //console.log('ConverterButtons:' + converterButtons);
+                        if (converterButtons) {
+                            eval('var btns=' + converterButtons);
+                            if (btns.length === 1) {
+                                for (var i = 0; i < btns[0].Items.length; i++) {
+                                    pushButton('<button onclick="showImport(\'' + btns[0].Items[i].Id + '\',\''+btns[0].Items[i].OutName+'\',\'' + value + '\',\'' + btns[0].Items[i].TemplateTypeId + '\')" class="btn btn-link btn-sm btn-xs" data-id="' + btns[0].Items[i].Id + '">转' + btns[0].Items[i].OutName + '</button>', value, operation);
+                                }
+                            } else {
+                                for (var i = 0; i < btns.length; i++) {
+                                    var items = JSON.stringify(btns[i].Items);
+                                    pushButton('<button onclick="showDetailClassic(this,\'' + value + '\')" data-level="{level}" data-item="' + btns[i].TemplateTypeId + '" data-id="' + escape(items) + '" class="btn btn-link btn-sm btn-xs">转' + btns[i].TemplateTypeName + '</button>', value, operation);
+                                }
+                            }
+                            
+                        }
+                    //pushButton('', value, operation);
+                        break;
+
+                case 25:
+                        pushButton(buttons.DownSnapShot[0],value,operation);
+                        break;
+
+                case 26:
+                        pushButton(buttons.AnalysisOFinanciaLiquidity[0],value, operation);
+                        break;
+
+                case 28:
+                        pushButton(buttons.PriceAdjustment[0], value, operation);
+                        break;
+
+                default:
+                    break;
+                }
+
+            });
+
+            return buildButtons(value, formatData);
+
+        }
+
+        return '';
+    }
+
+    /**
+     * 添加按钮
+     * btn buttons对象
+     * id
+     */
+    function pushButton(btn, id, operation) {
+        //button数量超过三个移除最后一个用more替代
+        eval('var m=initMoreButtons._' + id);
+        btn = btn.format({ operation: operation });
+        if (initButtons.length >= btnMoreCount && typeof m == 'undefined') {
+
+            eval('initMoreButtons._' + id + '=[]');
+            eval('m = initMoreButtons._' + id);
+            btn = btn.format({level:2});
+
+            var b = initButtons.pop();
+            b = b.replace('data-level="1"', 'data-level="2"');
+            m.push(b);
+            m.push(btn);
+        } else if (typeof m != 'undefined' && m.length > 0) {
+            btn = btn.format({ level: 2 });
+            m.push(btn);
+        } else {
+            btn = btn.format({ level: 1 });
+            initButtons.push(btn);
+        }
+    }
+
+    /**
+     * 生成正常按钮html内容
+     * id 表单id
+     * formatData 按钮中动态数据
+     */
+    function buildButtons(id, formatData) {
+        var html = '';
+        $.each(initButtons,
+            function() {
+                html += this;
+            });
+        eval('var m=initMoreButtons._' + id);
+        if (typeof m != 'undefined' && m.length > 0) {
+            html +=
+                '@Html.Coral().XButton(new XButtonSettings() {Value = "更多", CssClass = "btn-link btn-sm btn-xs", DataClick = "showMoreBtns(event,'{0}')"})'
+                .format(id);
+            $.each(m,
+                function(index) {
+                    m[index] = this.format(formatData);
+                });
+        }
+        initButtons = [];
+        html = html.format(formatData);
+        return html;
+    }
+
+    var timeTip;
+
+    function showMoreBtns(evt, id) {
+        evt = evt || window.event;
+        var x = 0, y = 0;
+        if (evt.pageX) {
+            x = evt.pageX;
+            y = evt.pageY;
+        } else if (evt.clientX) {
+            var offsetX = 0, offsetY = 0;
+            //IE6及其以上版本
+            if (document.documentElement.scrollLeft) {
+                offsetX = document.documentElement.scrollLeft;
+                offsetY = document.documentElement.scrollTop;
+            }
+            //IE较旧的版本
+            else if (document.body) {
+                offsetX = document.body.scrollLeft;
+                offsetY = document.body.scrollTop;
+            }
+            x = evt.clientX + offsetX;
+            y = evt.clientY + offsetY;
+        }
+        var menu = $('#popoverMoreMenu > div > ul');
+        var tmp = '<li></li>';
+        menu.children().remove();
+        eval('var m=initMoreButtons._' + id);
+        if (typeof m != 'undefined' && m.length > 0) {
+            $.each(m,
+                function(index, element) {
+                    $(tmp).appendTo(menu);
+                    $(element).removeClass('btn-primary btn-sm btn-xs').addClass('btn-link')
+                        .appendTo($('#popoverMoreMenu > div > ul > li:last'));
+                    //取消使用第二种状态按钮，动态修改样式，统一按钮
+                    //$(tmp.format(this[1])).appendTo(menu);
+                });
+        }
+
+        $('#popoverMoreMenu').show();
+        if (window.top === window) {
+            $('#popoverMoreMenu').css('left', x - 100);
+            $('#popoverMoreMenu').css('top', y);
+        } else {
+            $('#popoverMoreMenu').css('left', x - 100);
+            $('#popoverMoreMenu').css('top', y - 60);
+        }
+
+        var btn = $(evt.target);
+        if (btn.attr('data-hover') != 1) {
+            btn.attr('data-hover', 1);
+            btn.hover(function() {
+                },
+                function() {
+                    //timeObj = setTimeout(function() { $('#popoverMoreMenu').show(); }, 2000);
+                });
+
+            $('#popoverMoreMenu').hover(function() {
+                    clearTimeout(timeTip);
+                },
+                function() {
+                    timeTip = setTimeout(function() {
+                            if (!isOpenLevel2)
+                                $('#popoverMoreMenu').fadeOut();
+                        },
+                        1000);
+                });
+        }
+
+        coral.controls.operation.load();
+    }
+
+    /**
+     * 导入对话框
+     * pId:产品ID
+     * rowId:当前行单据ID
+     */
+    function showImport(pId,pName, rowId,templateTypeId) {
+        console.log('pid:' + pId + ',rowId:' + rowId + ',templateTypeId:' + templateTypeId);
+        //执行导入单据
+        var dialog = coral.showWaitingDialog('正在导入单据...');
+        coral.post('@Url.Action("ImportEntrustInfo", "Entrust",new{Area="Entrust"})', { id: rowId, pid: pId,pName:pName, templateTypeId: templateTypeId }, function (data) {
+            coral.closeWaitingDialog(dialog);
+            showDialog('@createEntrust?operation=1&id=' + data.oid, '创建业务');
+        });
+
+    }
+
+    var isOpenLevel2 = false;
+
+    function showDetailClassic(target, rowId) {
+        isOpenLevel2 = true;
+        var x = parseInt($('#popoverMoreMenu').css('left').replace('px', ''));
+        var y = parseInt($('#popoverMoreMenu').css('top').replace('px', ''));
+        var width = parseInt($('#popoverMoreMenu').css('width').replace('px', ''));
+
+        var t = $(target);
+        var level = t.attr('data-level');
+        var dataId = eval(unescape(t.attr('data-id')));
+        var dataItem = t.attr('data-item');
+
+        var popId = 'popover' + dataItem;
+
+        if (level == 1) {
+            //根据dataId获取产品小类列表
+//            var menu = $('#popoverMoreMenu > div > ul');
+//            var tmp = '<li></li>';
+//            menu.children().remove();
+//            $(tmp).appendTo(menu);
+//            for (var i = 0; i < dataId.length; i++) {
+//                $('<button class="btn btn-link">' + dataId[i].OutName+'</button>')
+//                    .appendTo($('#popoverMoreMenu > div > ul > li:last'));
+//            }
+//
+//            $('#popoverMoreMenu').show();
+//            $('#popoverMoreMenu').css('left', x - 300);
+//            $('#popoverMoreMenu').css('top', y - 70);
+            var evt = window.event;
+            if (evt.pageX) {
+                x = evt.pageX;
+                y = evt.pageY;
+            } else if (evt.clientX) {
+                var offsetX = 0, offsetY = 0;
+                //IE6及其以上版本
+                if (document.documentElement.scrollLeft) {
+                    offsetX = document.documentElement.scrollLeft;
+                    offsetY = document.documentElement.scrollTop;
+                }
+                //IE较旧的版本
+                else if (document.body) {
+                    offsetX = document.body.scrollLeft;
+                    offsetY = document.body.scrollTop;
+                }
+                x = evt.clientX + offsetX;
+                y = evt.clientY + offsetY;
+            }
+
+            if (window.top === window) {
+                x = x - 100;
+                y = y;
+            } else {
+
+            }
+
+            var pover = '<div class="popover fade bottom in" role="tooltip-dy" id="' +
+                popId +
+                '" style="top:' +
+                (y + 10) +
+                'px; left:' +
+                (x - 100) +
+                'px; display: block;z-index: 1040"><div class="arrow" style="left: 70%;"></div><div class="popover-content"><ul style="list-style-type: none; padding-left: 8px;">';
+
+            for (var i = 0; i < dataId.length; i++) {
+                pover += '<li><button onclick="showImport(\'' +
+                    dataId[i].Id +
+                    '\',\'' +
+                    rowId +
+                    '\',\'' +
+                    dataItem +
+                    '\')" data-tag="level2" class="btn btn-link">' +
+                    dataId[i].OutName +
+                    '</button></li>';
+            }
+            if (typeof dataId == 'undefined' || dataId.length === 0) {
+                
+            }
+
+            pover += '</ul></div></div>';
+            $(pover).appendTo("body");
+            $('#' + popId).show();
+
+        } else if (level == 2) {
+            var pover = '<div class="popover fade left in" role="tooltip-dy" id="' +
+                popId +
+                '" style="top:' +
+                (y + 100) +
+                'px; left:' +
+                (x - width + 50) +
+                'px; display: block;z-index: 1041"><div class="arrow" style="top: 50%;"></div><div class="popover-content"><ul style="list-style-type: none; padding-left: 8px;">';
+
+            for (var i = 0; i < dataId.length; i++) {
+                pover += '<li><button onclick="showImport(\'' +
+                    dataId[i].Id +
+                    '\',\'' +
+                    rowId +
+                    '\',\'' + dataItem+'\')" data-tag="level2" class="btn btn-link">' +
+                    dataId[i].OutName +
+                    '</button></li>';
+            }
+            pover += '</ul></div></div>';
+            $(pover).appendTo("body");
+            $('#' + popId).show();
+        }
+    }
+
+    $('body').bind('mousedown',
+        function(event) {
+            var $target = $(event.target);
+            if (event.target.id.indexOf('popover') >= 0 || $target.attr('data-tag') == 'level2') {
+
+            } else {
+                isOpenLevel2 = false;
+                $('div[role="tooltip-dy"]').remove();
+            }
+        });
+
+    function showViewDialog(t, id, val) {
+
+        var view = true;
+
+        $(t).parent().parent().find('button[data-action="operate"]').each(function() {
+            if (this.innerText.trim() == '评估') {
+                view = false;
+                coral.formDialog("/Entrust/Quick/Detail?id=" + id + "&operation=8", val, 600, null);
+                return false;
+            }
+            else if (this.innerText.trim() == '盖章') {
+                view = false;
+                coral.formDialog("/Entrust/SealOrder/Detail?id=" + id + "&operation=11", val, 600, null);
+                return false;
+            }
+            else if (this.innerText.trim() == '审核') {
+                view = false;
+                coral.formDialog("/Entrust/Quick/Detail?id=" + id + "&operation=9", val, 600, null);
+                return false;
+            }
+            else if (this.innerText.trim() == '同意') {
+                view = false;
+                coral.formDialog("/Entrust/Quick/Detail?id=" + id + "&operation=5", val, 600, null);
+                return false;
+            }
+            else if (this.innerText.trim() == '补充资料') {
+                view = false;
+                coral.formDialog("/Entrust/EntrustOwn/Create?id=" + id + "&operation=13", val, 600, null);
+                return false;
+            }
+            else if (this.innerText.trim() == '编辑') {
+                view = false;
+                coral.formDialog("/Entrust/EntrustOwn/Create?id=" + id + "&operation=1", val, 600, null);
+                return false;
+            }
+        });
+        eval('var m=initMoreButtons._' + id);
+
+        if (typeof m != 'undefined' && m.length > 0) {
+            $.each(m,
+                function (index, element) {
+                    if ($(element).text().trim() == '评估') {
+                        view = false;
+                        coral.formDialog("/Entrust/Quick/Detail?id=" + id + "&operation=8", val, 600, null);
+                        return false;
+                    }
+                    else if ($(element).text().trim() == '盖章') {
+                        view = false;
+                        coral.formDialog("/Entrust/SealOrder/Detail?id=" + id + "&operation=11", val, 600, null);
+                        return false;
+                    }
+                    else if ($(element).text().trim() == '审核') {
+                        view = false;
+                        coral.formDialog("/Entrust/Quick/Detail?id=" + id + "&operation=9", val, 600, null);
+                        return false;
+                    }
+                    else if ($(element).text().trim() == '同意') {
+                        view = false;
+                        coral.formDialog("/Entrust/Quick/Detail?id=" + id + "&operation=5", val, 600, null);
+                        return false;
+                    }
+                    else if ($(element).text().trim() == '补充资料') {
+                        view = false;
+                        coral.formDialog("/Entrust/EntrustOwn/Create?id=" + id + "&operation=13", val, 600, null);
+                        return false;
+                    }
+                    else if ($(element).text().trim() == '编辑') {
+                        view = false;
+                        coral.formDialog("/Entrust/EntrustOwn/Create?id=" + id + "&operation=1", val, 600, null);
+                        return false;
+                    }
+                    //取消使用第二种状态按钮，动态修改样式，统一按钮
+                    //$(tmp.format(this[1])).appendTo(menu);
+                });
+        }
+
+//        $('.bootstrap-table button[data-action="operate"]').each(function () {
+//            console.log(this.innerText);
+//            if (this.innerText.trim() == '评估') {
+//
+//            }
+        //        });
+        if (view) {
+            coral.formDialog("/Entrust/Quick/Detail?id="+id+"&operation=19", "查看", 600, null);
+        }
+    }
+
+    function showEntrustViewDialog(id) {
+        coral.formDialog("/Entrust/Quick/Detail?id=" + id + "&operation=19", "<label class=\"fa fa-lock\"></label>&nbsp;查看", 600, null);
+    }
+
+    function buildViewButton(id, value, row) {
+        var btn = '';
+        if (row['IsSuspend'] && row['IsSuspend'] == 1) {
+            //coral.formDialog("/Entrust/Quick/Detail?id="+id+"&operation=19", "查看", 600, null);
+            btn =
+                '<a class="btn-auto" href="javascript:void(0)" onclick="showEntrustViewDialog(\'{id}\')">{value}</a>';
+        } else {
+            btn = '<a class="btn-auto" href="javascript:void(0)" onclick="showViewDialog(this,\'{id}\',\'{value}\')">{value}</a>';
+        }
+        //var click = 'coral.formDialog("/Entrust/Quick/Detail?id={id}&operation={operation}","查看",600,null)';
+        return btn.format({value:value,id:id});
+    }
+
+</script>

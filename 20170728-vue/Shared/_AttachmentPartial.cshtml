@@ -1,0 +1,344 @@
+﻿@*附件tab*@
+@*用到的地方：新增 补充资料 查勘 评估 查看*@
+@{
+    Layout = null;
+    var operation = (EntrustOperation)ViewBag.Operation;
+    var disabled = !(operation == EntrustOperation.Evaluativeing || operation == EntrustOperation.Surveying || operation == EntrustOperation.Supplementarying || operation == EntrustOperation.BasicModify);
+
+}
+@using Viss.Client.Manager.Html
+@using Viss.Client.Manager.Html.XButton
+@using Viss.Service.Contract.Entrust.Aritificial
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+@{
+    if (!disabled && Model.IsSuspend)
+    {
+        disabled = true;
+    }
+    }
+<fieldset id="fieldsetAttachment">
+    <legend>业务附件</legend>
+    <canvas id="canvasForDown" style="display: none"></canvas>
+    <div id="attdropdown" class="dropdown">
+        
+        @*<ul class="dropdown-menu" aria-labelledby="dropdownMenu1"></ul>*@
+        <div class="row" style="margin: 0;">
+            <a @(disabled ? "disabled" : "") class="btn btn-default dropdown-toggle" id="ctrBtn">
+                上传附件
+            </a>
+            <div class="btn-group" data-toggle="buttons" id="attachBtn" style="border-radius: 15px; -webkit-border-radius: 15px; -moz-border-radius: 15px;  border: 1px solid #e5e5e5; display: none;">
+                <label class="btn btn-default" style="border: none;" disabled="disabled">
+                    <input name="options" type="radio"> 上传附件：
+                </label>
+            </div>
+        </div>
+    </div>
+    <div id="uploader" style="display: none;">
+        <div class="btns">
+            <div id="picker">选择文件</div>
+        </div>
+    </div>
+</fieldset>
+@if (operation != EntrustOperation.BasicModify&& operation != EntrustOperation.Supplementarying)
+{
+    if (!disabled)
+    {
+        <div class="fix-bottom-operation"></div>
+        <div class="bottom-operation">
+            @Html.Coral().XButton(new XButtonSettings
+    {
+        Id = "btnSaveAttachment",
+        CssClass = "btn btn-primary",
+        Value = "上传附件",
+        DataClick = "upload()"
+    })
+        </div>
+    }
+}
+<script type="text/javascript">
+    var canupload = false;
+    var attdisabled = '@(disabled)';
+    var attoperation = '@operation.ToString()';
+    var uploader;
+    var thumbnailWidth = 70, thumbnailHeight = 70;
+    var currentAttachmentType, fileArr = {};
+    var isleaveAttachment = false;
+    //模板
+    var htmlattachmenttypetmp = "<div id='divattachment{attachmentType}' class='col-sm-12'>";
+    htmlattachmenttypetmp += "    <h4>{attachmentTypeName}</h4>";
+    htmlattachmenttypetmp += "</div>";
+
+    //模板
+    var htmlattachmenttmp = "<div id='{fileid}' attid='{attid}' fileurl='{FileUrl}' class='col-sm-4 fileblock'>";
+    htmlattachmenttmp += "    <div class='col-sm-4'><img width='{thumbnailWidth}px' height='{thumbnailHeight}px' src='{PictureThumbnailUrl}'></div>";
+    htmlattachmenttmp += "    <div class='col-sm-8'>";
+    htmlattachmenttmp += "        <p title='{FileName}' class='progress-p'>{FileName}</p>";
+    htmlattachmenttmp += "        <p class='progress-p'>{Size}</p>";
+    //htmlattachmenttmp+="        <p class='progress'><span style='{10}' class='progressWidth'></span><span class='progressValue'>{9}</span></p>";
+    htmlattachmenttmp +=
+        "        <p style='margin-bottom: 20px;'><span style='' class='progressWidth'></span><span class='progressValue'></span></p>";
+    htmlattachmenttmp += "    </div>";
+    htmlattachmenttmp +="      <div class='webuploader-option' style=''>";
+    htmlattachmenttmp+="      </div>";
+    htmlattachmenttmp += "</div>";
+
+    function upload() {
+        uploader.upload();
+    }
+
+    $(function () {
+        bindData();
+        initWebUploader();
+
+        $('a[href="#attachment"]').on('hide.bs.tab',
+            function (e) {
+                if (isleaveAttachment) {
+                    return true;
+                }
+                if (!WebUploader.extend.hasUnUpload(uploader)) {
+                    return true;
+                }
+                coral.confirm("还有未上传的附件,确定离开吗？", function (result) {
+                    if (result) {
+                        //equityInfoData = getEquityInfoData();
+                        isleaveAttachment = true;
+                        $(e.relatedTarget).tab('show');
+                    }
+
+                });
+                return false;
+            });
+    });
+
+    var bindData = function () {
+        var id = $("#Id").val();
+        if (coral.IsKong(id) || id==="0") {
+            coral.post("@Url.Action("GetAttachmentType", "Attachment", new { area = "Adapter" })",function(data) {
+                bindAttachmentType(data);
+            });
+        } else {
+            coral.post("@Url.Action("GetAttachmentsAndType", "Attachment", new { area = "Adapter" })",
+                { moduleName: 'EntrustInformation', moduleElementKey: id },
+                function(data) {
+                    bindAttachmentType(data.type);
+                    bindAttachment(data.list);
+                });
+        }
+
+    }
+
+    var bindAttachmentType = function(data) {
+        var html = '';
+        //for (var i = 0; i < data.length; i++) {
+        //    var item = data[i];
+        //    html += '<li attachmentType="' + item.Value + '"><a>' + item.Text + '</a></li>';
+        //}
+        //$("#fieldsetAttachment ul").html(html);
+
+        for (var i = 0; i < data.length; i++) {
+            var item = data[i];
+            html +=
+                '<label class="btn btn-default" style="border: none;"><input name="options" type="radio" attachmentType="' +
+                item.Value +
+                '"> ' +
+                item.Text +
+                '</label>';
+        };
+        $("#attachBtn").append(html);
+        $("#attdropdown label").click(function() {
+            if ($(this).index() !== 0) {
+                currentAttachmentType = $(this).children("input").attr("attachmentType");
+                $(".webuploader-element-invisible").click();
+            }
+
+        });
+    }
+    var bindAttachment = function(list) {
+        for (var i = 0; i < list.length; i++) {
+            var item = list[i];
+            var divattachment = $("#divattachment" + item.AttachTypeName);
+            if (divattachment.length === 0) {
+                var typehtml = htmlattachmenttypetmp;
+                typehtml = typehtml.format({
+                    attachmentType: item.AttachTypeName,
+                    attachmentTypeName: item.AttachTypeText
+                });
+                $("#fieldsetAttachment").append(typehtml);
+                divattachment = $("#divattachment" + item.AttachTypeName);
+            }
+
+            var atthtml = htmlattachmenttmp;
+            atthtml = atthtml.format({
+                fileid: '',
+                attid: item.Id,
+                FileUrl: item.FileUrl,
+                thumbnailWidth: uploader.options.thumb.width,
+                thumbnailHeight: uploader.options.thumb.height,
+                PictureThumbnailUrl: WebUploader.extend.getPictureThumbnailUrl(item),
+                FileName: item.FileName,
+                Size: coral.getFileSize(item.Size)
+            });
+            var $attachmenghtml = $(atthtml).appendTo(divattachment);
+
+            WebUploader.extend.bindDown($attachmenghtml);
+            var url = '@Url.Action("Delete", "Attachment", new {area = "Adapter"})?id=' + item.Id;
+            //判断制度状态没有删除
+            if (attdisabled !== "True") {
+                WebUploader.extend.bindDelete(uploader, $attachmenghtml, url);
+            }
+        }
+    }
+
+    //function GetPictureThumbnailUrl(item) {
+    //    if (item.FileType !== "picture") {
+    //        return "/Themes/Misc/images/icon_qita.png";
+    //    } 
+    //    if (coral.IsKong(item.PictureThumbnailUrl)) {
+    //        if (coral.IsKong(item.PictureEnlargedUrl)) {
+    //            if (coral.IsKong(item.FileUrl)) {
+    //                return "/Themes/Misc/images/icon_qita.png";
+    //            } else {
+    //                return item.FileUrl;
+    //            }
+    //        } else {
+    //            return item.PictureThumbnailUrl;
+    //        }
+    //    } else {
+    //        return item.PictureThumbnailUrl;
+    //    }
+    //}
+
+    function initWebUploader() {
+        if ($("#fieldsetAttachment").prop("disabled")) {
+            return;
+        }
+        uploader = WebUploader.create({
+            // swf文件路径
+            //swf: '@Url.Content("~/Themes/Misc/scripts/plugin/webuploader/Uploader.swf")',
+            // 文件接收服务端。
+            server: '@Url.Action("Upload", "Attachment", new {area = "Adapter"})',
+            // 选择文件的按钮。可选。
+            // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+            pick: '#picker',
+            // 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+            resize: false,
+            formData: {
+                moduleName: "EntrustInformation",
+                moduleElementKey: $("#Id").val()
+                //moduleElementKey: '9008766718256873536'
+            },
+            thumb: {
+                width: 70,
+                height: 70
+            }
+            //,accept: {
+            //    title: 'Images',
+            //    extensions: 'gif,jpg,jpeg,bmp,png',
+            //    mimeTypes: 'image/*'
+            //} 
+        });
+
+        //添加队列
+        uploader.on('fileQueued',
+            function(file) {
+                //
+                fileArr[file.id] = currentAttachmentType;
+                var divattachment = $("#divattachment" + currentAttachmentType);
+                if (divattachment.length === 0) {
+                    //var name = $("li[attachmentType='" + currentAttachmentType + "'] a").html();
+                    var name =$("input[attachmentType='" + currentAttachmentType + "']").parent("label").text();
+                    var typehtml = htmlattachmenttypetmp;
+                    typehtml = typehtml.format({
+                        attachmentType: currentAttachmentType,
+                        attachmentTypeName: name
+                    });
+                    $("#fieldsetAttachment").append(typehtml);
+                    divattachment = $("#divattachment" + currentAttachmentType);
+                }
+
+                var atthtml = htmlattachmenttmp;
+                atthtml = atthtml.format({
+                    fileid: file.id,
+                    attid: '',
+                    FileUrl: '',
+                    thumbnailWidth: uploader.options.thumb.width,
+                    thumbnailHeight: uploader.options.thumb.height,
+                    PictureThumbnailUrl: (file.type.indexOf("image/") === -1) ? "/Themes/Misc/images/icon_qita.png" : "",
+                    FileName: file.name,
+                    Size: coral.getFileSize(file.size)
+                });
+
+                WebUploader.extend.bindDelete(uploader,$(atthtml).appendTo(divattachment));
+
+                //
+                // 创建缩略图
+                uploader.makeThumb(file,
+                    function(error, src) {
+                        var $imgdiv = $("#" + file.id + " div:first");
+                        if (error) {
+                            $imgdiv.html("<img src='/Themes/Misc/images/icon_qita.png'/>");
+                            return;
+                        }
+                        $imgdiv.html("<img src='" + src + "'/>");
+                    },
+                    thumbnailWidth,
+                    thumbnailHeight);
+            });
+
+        // 文件上传过程中创建进度条实时显示。
+        //uploader.on('uploadProgress',
+        //    function(file, percentage) {
+        //        $('#' + file.id + " .progress .progressWidth").css('width', percentage * 100 + '%');
+        //        $('#' + file.id + " .progress .progressValue").html(percentage * 100 + '%');
+        //    });
+
+        uploader.on("uploadBeforeSend",
+            // ReSharper disable once UnusedParameter
+            function (object, data, headers) {
+                canupload = true;
+                data.attachmentType = fileArr[data.id];
+            });
+
+        uploader.on("uploadSuccess",
+            function (file, response ) {
+                //delete fileArr[file.id];
+                //console.log(JSON.stringify(response));
+                if (response.Data && response.Data.State == 0) {
+                    coral.toast("success", "上传成功.");
+                }
+            });
+
+        uploader.on('error',function(t) {
+            
+        });
+
+        uploader.on('uploadFinished', function() {
+           
+            if (!canupload) {
+                coral.toast("warning", "没有找到需要上传的附件.");
+            } else {
+                if (attoperation === "BasicModify" || attoperation === "Supplementarying") {
+                    if (window.uploadFinishedCallBack) {
+                        window.uploadFinishedCallBack();
+                    }
+                }
+            }
+            canupload = false;
+        });
+    };
+
+    //debugger;
+    if (!$("#ctrBtn").attr("disabled")) {
+        $("#ctrBtn").hover(function () {
+            $(this).hide();
+            $("#attachBtn").show();
+        });
+        $(document).on('mousedown', function (e) {
+            if (!$(e.target).is($('#attachBtn')) && !$(e.target).is($('#attachBtn')) && $(e.target).parent('#attachBtn').length === 0) {
+                $('#attachBtn').hide();
+                $("#ctrBtn").show();
+            }
+        });
+    }
+
+</script>

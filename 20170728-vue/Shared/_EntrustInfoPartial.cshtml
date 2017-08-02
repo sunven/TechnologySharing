@@ -1,0 +1,84 @@
+﻿@{
+    Layout = null;
+    var disabled = ViewData["IsDisabled"] != null && (bool)ViewData["IsDisabled"];
+}
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+<fieldset id="fieldsetEntrustInfo" @(disabled ? "disabled" : "")>
+    <legend>委托方信息</legend>
+        <div class="row">
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">委托机构</label>
+                </div>
+                <div>
+                    <div style="position: relative;">
+                        @Html.EditorFor(item => item.EntrustOrgName, new { @readonly = true, style = "background-color: #fff; padding-right: 35px;" })
+                        @if (!disabled)
+                        {
+                            <span class="caret" style="position: absolute; right: 10px; top: 50%;"></span>
+                        }
+                    </div>
+                    @Html.HiddenFor(c => c.EntrustOrgType)
+                    @Html.HiddenFor(c => c.EntrustOrgId)
+                </div>
+                <div id="containerEntrustOrg" class="treecontainer">
+                    <ul id="treeEntrustOrg" class="ztree ultree" style=""></ul>
+                </div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">联系人</label>
+                </div>
+                <div>@Html.EditorFor(item => item.EntrustLinkman)</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">联系电话</label>
+                </div>
+                <div>@Html.EditorFor(item => item.EntrustMobilePhone)</div>
+            </div>
+        </div>
+</fieldset>
+<script type="text/javascript">
+    var treeEntrustOrgObj;
+    $(function () {
+        if ("@disabled.ToString()"==="True") {
+            coral.controls.setDisableStyle("fieldsetEntrustInfo");
+        }
+        if ($("#fieldsetEntrustInfo").prop("disabled")) {
+            return;
+        }
+        bindEntrustOrg();
+    });
+
+    //委托机构
+    var bindEntrustOrg = function () {
+        coral.post(coral.GetLocalhostPath() + "/entrust/entrust/GetCustomOrganize", function (data) {
+            $.fn.zTree.init($("#treeEntrustOrg"), $.extend({}, { callback: { onCheck: treeEntrustOrgOnCheck } }, $.ztreeExtend.defaultSettings), data);
+            treeEntrustOrgObj = $.ztreeExtend.init({
+                postion: "EntrustOrgName",
+                container: "containerEntrustOrg"
+            });
+        });
+    }
+
+    var treeEntrustOrgOnCheck = function (e, treeId, treeNode) {
+        //EntrustOrgName EntrustOrgType EntrustOrgId 赋值
+
+        var $EntrustOrgName = $("#EntrustOrgName");
+        var $EntrustOrgId = $("#EntrustOrgId");
+        var $EntrustOrgType = $("#EntrustOrgType");
+
+        if (treeNode.checked) {
+            $EntrustOrgName.val(treeNode.name);
+            $EntrustOrgId.val(treeNode.id);
+            var parnetNode = $.ztreeExtend.getCurrentRoot(treeNode);
+            $EntrustOrgType.val(parnetNode.id);
+        } else {
+            $EntrustOrgName.val('');
+            $EntrustOrgId.val('');
+            $EntrustOrgType.val('');
+        }
+        treeEntrustOrgObj.hideMenu();
+    }
+</script>

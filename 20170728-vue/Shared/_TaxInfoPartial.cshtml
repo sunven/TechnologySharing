@@ -1,0 +1,179 @@
+﻿@{
+    Layout = null;
+    var operation = ViewBag.Operation == null ? EntrustOperation.Supplementarying : (EntrustOperation)ViewBag.Operation;
+    bool disabled = ViewBag.IsDisabled = !(operation == EntrustOperation.BasicModify || operation == EntrustOperation.Supplementarying);
+    //针对税费的字段表单验证  因为viewmodel 不能加require
+    ViewData.Add("data-val", "true");
+    ViewData.Add("data-val-required", "必填");
+}
+@using Viss.Service.Contract.Entrust.Aritificial
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+<fieldset id="fieldsetTaxInfo" @(disabled ? "disabled" : "")>
+    <legend>
+        税费信息
+        <span style="font-size: 14px; padding-left: 10px;">
+            <label>
+                @Html.CheckBoxFor(c => c.IsCalcTax, new { id = "chkistax" })
+                是否计算税费
+            </label>
+        </span>
+    </legend>
+    <div id="div_tax" class="@(Model.IsCalcTax ? "" : "hide")">
+        <div class="row">
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>交易类型</label>
+                    @Html.ValidationMessageFor(c => c.TransActionType)
+                </div>
+                <div>@Html.EditorFor(c => c.TransActionType)</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>土地性质</label>
+                    @Html.ValidationMessageFor(c => c.LandProperty)
+                </div>
+                <div>@Html.EditorFor(c => c.LandProperty)</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>房屋性质</label>
+                    @Html.ValidationMessageFor(c => c.Celllabel)
+                </div>
+                <div>@Html.EditorFor(c => c.Celllabel)</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>卖家类型</label>
+                    @Html.ValidationMessageFor(c => c.SellerType)
+                </div>
+                <div>@Html.EditorFor(c => c.SellerType)</div>
+            </div>
+        </div><div class="row">
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>是否卖家唯一住房</label>
+                    @Html.ValidationMessageFor(c => c.SellerOnly)
+                </div>
+                <div>
+                    @Html.EditorFor(c => c.SellerOnly)
+                </div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>买家类型</label>
+                    @Html.ValidationMessageFor(c => c.BuyHouseType)
+                </div>
+                <div>
+                    @Html.EditorFor(c => c.BuyHouseType)
+                </div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>房屋套次</label>
+                    @Html.ValidationMessageFor(c => c.HousingCover)
+                </div>
+                <div>@Html.EditorFor(c => c.HousingCover)</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>购入时间</label>
+                    @Html.ValidationMessageFor(c => c.TPurchaseTime)
+                </div>
+                <div>@Html.EditorFor(item => item.TPurchaseTime)</div>
+            </div>
+        </div><div class="row">
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label"><i>*</i>购入价格</label>
+                    @Html.ValidationMessageFor(c => c.TPurchasePrice)
+                </div>
+                <div>@Html.EditorFor(item => item.TPurchasePrice)</div>
+            </div>
+            @{
+                //以下字段移除验证
+                ViewData.Remove("data-val");
+                ViewData.Remove("data-val-required");
+            }
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">抵扣费用</label>
+                </div>
+                <div>@Html.EditorFor(item => item.DeductionPrice)</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">使用面积</label>
+                </div>
+                <div>@Html.EditorFor(item => item.UsageAreaLimit)</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">容积率</label>
+                </div>
+                <div>@Html.EditorFor(item => item.PlotRatio)</div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">环线</label>
+                </div>
+                <div>
+                    @Html.EditorFor(c => c.LoopLine)
+                </div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">预计完成时间</label>
+                </div>
+                <div>@Html.EditorFor(item => item.EstimateTime)</div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">原值证明</label>
+                </div>
+                <div>
+                    @Html.EditorFor(item => item.OriginalProve)
+                </div>
+            </div>
+            <div class="form-group col-sm-3">
+                <div>
+                    <label class="control-label">产证数量</label>
+                </div>
+                <div>@Html.EditorFor(item => item.CertificateCount)</div>
+            </div>
+        </div>
+    </div>
+
+</fieldset>
+<script type="text/javascript">
+    $(function() {
+        if ("@disabled.ToString()"==="True") {
+            $("#fieldsetTaxInfo label").css("color", "#B7B7B7").html().replace("<i>*</i>", "");
+            $("#fieldsetTaxInfo label").each(function () {
+                var $this = $(this);
+                $this.html($this.html().replace("<i>*</i>", ""));
+            });
+        }
+    });
+    //是否计算税费
+    $("#chkistax").prop("disabled", $("#fieldsetTaxInfo").prop("disabled"));
+
+    $("#chkistax").change(function () {
+        //此处影响表单验证
+        if ($(this).prop("checked")) {
+            $("#div_tax").removeClass("hide");
+            $('input[name="IsCalcTax"][type="hidden"]').val('true');
+            bindLoopLine();
+        } else {
+            $("#div_tax").addClass("hide");
+            $('input[name="IsCalcTax"][type="hidden"]').val('false');
+        }
+    });
+    if ('@Model.IsCalcTax'=='True') {
+        $('#chkistax').attr('checked', 'checked');
+        $('input[name="IsCalcTax"][type="hidden"]').val('true');
+        $("#chkistax").change();
+    }
+
+</script>

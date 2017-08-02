@@ -1,0 +1,271 @@
+﻿@{
+    Layout = null;
+}
+@using Viss.Client.Manager.Html
+@using Viss.Client.Manager.Html.XButton
+@using Viss.Service.Contract.Entrust.Aritificial
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+@{
+    string disabled = "disabled";
+    var operation = (EntrustOperation)ViewBag.Operation;
+    if (operation == EntrustOperation.Surveying || operation == EntrustOperation.Evaluativeing)
+    {
+        disabled = "";
+    }
+    if (Model.IsSuspend)
+    {
+        disabled = "disabled";
+    }
+
+}
+<fieldset id="quickReport">
+    <legend>估价报告</legend>
+    <div class="row">
+        选择制作方式：
+        <div class="radio col-sm-12">
+
+            <div class="col-sm-4" style="margin-top: 10px;">
+                <label id="reportSysMakerLbl">
+                    <input type="radio" checked="" name="ReportMakerType" id="reportSysMaker" />估价作业系统
+                </label>
+            </div>
+            <div class="col-sm-4" id="reportUploaderContainer">
+                <label>
+                    <input type="radio" checked="" name="ReportMakerType" id="ckbReportMakerType" />
+                    本地上传
+                </label>
+                <a class="btn btn-primary btn-sm operate-cancel btn-xs" id="reportLocalUpload">选择文件</a>
+                <div id="reportUploader" style="display: none;">
+                    <div class="btns">
+                        <div id="reportPicker">选择文件</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="reportFileQueue" style="margin-top: 10px;" class="row">
+    </div>
+</fieldset>
+<input name="DefaultAttachment" id="DefaultAttachment" value="@Model.DefaultAttachment" type="hidden"/>
+
+<script type="text/javascript">
+
+    var reportUploader;
+
+    //模板
+    var reportattachmenttmp = "<div id='{fileid}' attid='{attid}' fileurl='{FileUrl}' class='col-sm-12 fileblock'>";
+    reportattachmenttmp +=
+        "    <div class='col-sm-4'><img width='{thumbnailWidth}px' height='{thumbnailHeight}px' src='{PictureThumbnailUrl}'></div>";
+    reportattachmenttmp += "    <div class='col-sm-8'>";
+    reportattachmenttmp += "        <p title='{FileName}' class='progress-p'>{FileName}</p>";
+    reportattachmenttmp += "        <p class='progress-p'>{Size}</p>";
+    //sealattachmenttmpmp+="        <p class='progress'><span style='{10}' class='progressWidth'></span><span class='progressValue'>{9}</span></p>";
+    reportattachmenttmp +=
+        "        <p style='margin-bottom: 20px;'><span style='' class='progressWidth'></span><span class='progressValue'></span></p>";
+    reportattachmenttmp += "    </div>";
+    reportattachmenttmp += "      <div class='webuploader-option' style=''>";
+    reportattachmenttmp += "      </div>";
+    reportattachmenttmp += "</div>";
+
+    $(function() {
+
+        var findoutSys = false;
+        var app = parent.top.$("#nav-ctr")
+            .find("a.btn-app").each(function() {
+                if ($(this).text().trim() == '估价作业') {
+                    findoutSys = true;
+                    return true;
+                }
+
+            });
+        if (findoutSys === false) {
+            $('#reportSysMakerLbl').hide();
+        }
+
+
+        coral.controls.operation.load();
+        initReportWebUploader();
+        bindReportAttachment();
+
+
+        $('#reportLocalUpload').click(function() {
+            $('#ckbReportMakerType').prop('checked', true);
+            $('#DefaultAttachment').val('ForUser');
+            //删除估价作业系统产生的附件
+            coral.post('@Url.Action("DelReportAttatchment", "Attachment", new {area = "Adapter"})',
+                {
+                    moduleName: "EntrustInformation",
+                    moduleElementKey: $("#Id").val(),
+                    attachType: "ArtificialForSystem",
+                    description: "",
+                    type: "ForUser"
+                },
+                function() {
+                    $('#reportFileQueue').children().remove();
+                });
+            $("#reportUploaderContainer").find(".webuploader-element-invisible").click();
+        });
+
+        $('#reportSysMaker').click(function() {
+            parent.top.coral.confirm('您确定要切换到估价作业系统吗？',
+                function(result) {
+                    if (result == true) {
+
+                        parent.top.coral.showWaitingDialog('正在为您暂存当前数据...');
+                        $('#DefaultAttachment').val('ForSystem');
+                        //删除附件
+                        coral.post('@Url.Action("DelReportAttatchment", "Attachment", new {area = "Adapter"})',
+                            {
+                                moduleName: "EntrustInformation",
+                                moduleElementKey: $("#Id").val(),
+                                attachType: "ArtificialForUser",
+                                description: "",
+                                type: "ForSystem"
+                            },
+                            function() {
+                                $('#reportFileQueue').children().remove();
+
+                                //暂存数据
+                                coral.post('/entrust/Quick/AppraisalSave',
+                                    $("#appraisalform").serialize(),
+                                    function() {
+                                        //实现调整
+                                        var url = '@Url.Action("TransToReportSystem", "Home", new {area = "Portal"})';
+                                        coral.post(url,
+                                            {
+                                                code: 'Caad.Report',
+                                                queryString: 'entrustId=' + $("#Id").val()
+                                            },
+                                            function(data) {
+                                                parent.top.location.href = data;
+                                            });
+                                    });
+
+
+                            });
+
+
+                    } else {
+                        $('#reportLocalUpload').prop('checked', true);
+                    }
+                });
+        });
+
+        initDisableControl();
+    });
+
+    function initDisableControl() {
+        if ('@disabled' == 'disabled') {
+            $('#quickReport').find('input[type="radio"]').each(function () {
+                $(this).attr('disabled', 'disabled');
+            });
+            $('#quickReport').find('a[class="btn btn-primary"]').each(function () {
+                $(this).hide();
+            });
+            $('#reportUploaderContainer').css('margin-top', '10px');
+
+            $('button[class="btn btn-default btn-xs upload-trash"]').hide();
+            $('#reportLocalUpload').hide(); 
+        }
+    }
+
+    function initReportWebUploader() {
+        reportUploader = WebUploader.create({
+            // swf文件路径
+            swf: '@Url.Content("~/Themes/Misc/scripts/plugin/webuploader/Uploader.swf")',
+            // 文件接收服务端。
+            server: '@Url.Action("UpdateReportAttatchment", "Attachment", new {area = "Adapter"})',
+            // 选择文件的按钮。可选。
+            // 内部根据当前运行是创建，可能是input元素，也可能是flash.
+            pick: '#reportPicker',
+            // 不压缩image, 默认如果是jpeg，文件上传前会压缩一把再上传！
+            resize: false,
+            formData: {
+                moduleName: "EntrustInformation",
+                moduleElementKey: $("#Id").val(),
+                attachmentType: "ArtificialForUser"
+                //moduleElementKey: '9008766718256873536'
+            },
+            thumb: {
+                width: 70,
+                height: 70
+            }
+        });
+
+        //添加队列
+        reportUploader.on('fileQueued',
+            function(file) {
+                var atthtml = reportattachmenttmp;
+                atthtml = atthtml.format({
+                    fileid: file.id,
+                    attid: '',
+                    FileUrl: '',
+                    thumbnailWidth: reportUploader.options.thumb.width,
+                    thumbnailHeight: reportUploader.options.thumb.height,
+                    PictureThumbnailUrl: (file.type.indexOf("image/") === -1) ? "/Themes/Misc/images/icon_qita.png" : "",
+                    FileName: file.name,
+                    Size: coral.getFileSize(file.size)
+                });
+                WebUploader.extend.bindDelete(reportUploader, $(atthtml).appendTo("#reportFileQueue"));
+
+                //
+                // 创建缩略图
+                reportUploader.makeThumb(file,
+                    function(error, src) {
+                        var $imgdiv = $("#" + file.id + " div:first");
+                        if (error) {
+                            return;
+                        }
+                        $imgdiv.html("<img src='" + src + "'/>");
+                    },
+                    reportUploader.options.thumb.width,
+                    reportUploader.options.thumb.height);
+
+                reportUploader.upload();
+            });
+    }
+
+    var bindReportAttachment = function() {
+
+        var isLocal = '@Model.DefaultAttachment';
+        if (isLocal == 'ForSystem') {
+            isLocal = 'ForSystem';
+            $('#reportSysMaker').prop('checked', true);
+        } else {
+            $('#ckbReportMakerType').prop('checked', true);
+        }
+        coral.post("@Url.Action("GetReportFiles", "Attachment", new { area = "Adapter" })",
+            {
+                moduleName: 'EntrustInformation',
+                moduleElementKey: $("#Id").val(),
+                attachType: 'Artificial' + isLocal
+            },
+            function(data) {
+                for (var i = 0; i < data.length; i++) {
+                    $('#reportLocalUpload').prop('checked', true);
+                    var item = data[i];
+                    var atthtml = reportattachmenttmp;
+                    atthtml = atthtml.format({
+                        fileid: '',
+                        attid: item.Id,
+                        FileUrl: item.FileUrl,
+                        thumbnailWidth: reportUploader.options.thumb.width,
+                        thumbnailHeight: reportUploader.options.thumb.height,
+                        PictureThumbnailUrl: '/Themes/Misc/images/icon_qita.png',
+                        FileName: item.FileName,
+                        Size: coral.getFileSize(item.Size)
+                    });
+                    var $atthtml = $(atthtml).appendTo("#reportFileQueue");
+                    WebUploader.extend.bindDown($atthtml);
+
+                    if ('@disabled' != 'disabled') {
+                        var url = '@Url.Action("Delete", "Attachment", new {area = "Adapter"})?id=' + item.Id;
+                        WebUploader.extend.bindDelete(reportUploader, $atthtml, url);
+                    }
+                    break;
+                }
+            });
+
+    }
+</script>

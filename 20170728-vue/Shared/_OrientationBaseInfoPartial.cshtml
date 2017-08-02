@@ -1,0 +1,281 @@
+﻿@{
+    Layout = null;
+}
+@model Viss.Client.Manager.Areas.Entrust.Models.EntrustModel
+<fieldset>
+    <legend>获取系统数据 提示：使用系统中现有数据自动填充“基本信息”</legend>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">物业</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-6">
+        <div>
+            <label class="control-label">地址</label>
+            <div>@Html.EditorFor(item => item.MobilePhone)</div>
+        </div>
+    </div>
+    <div class="form-group col-sm-3">
+        <label class="control-label">&nbsp;</label>
+        <div>
+            <button class="btn btn-default" id="btnSearch">搜索</button>
+        </div>
+    </div>
+    <table id="orientationTableGrid"></table>
+</fieldset>
+<fieldset>
+    <legend>基本信息</legend>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小区现ID</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小区原ID</label>
+            <div>@Html.EditorFor(item => item.MobilePhone)</div>
+        </div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小区编码</label>
+            <div>@Html.EditorFor(item => item.MobilePhone)</div>
+        </div>
+    </div>
+    <div class="form-group col-sm-3"></div>
+</fieldset>
+<fieldset>
+    <legend></legend>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小区名址</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">其他名址</label>
+            <div>@Html.EditorFor(item => item.MobilePhone)</div>
+        </div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">社区/村</label>
+            <div>@Html.EditorFor(item => item.MobilePhone)</div>
+        </div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小区地址</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">街道/乡镇</label>
+            <div>@Html.EditorFor(item => item.MobilePhone)</div>
+        </div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">地区</label>
+            <div>@Html.EditorFor(item => item.MobilePhone)</div>
+        </div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">北至</label>
+            <div>@Html.EditorFor(item => item.MobilePhone)</div>
+        </div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">东至</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">西至</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">南至</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">邮编</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">环线</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">板块</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">细分板块</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">图丘号</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">物业分类</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">物业细分</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+</fieldset>
+<fieldset>
+    <legend></legend>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小区类型</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">竣工时间</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">建筑风格</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">建筑类别</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小区标签</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小区档次</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">周边小区</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">楼盘状态</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">施工方名称</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">设计单位</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+</fieldset>
+<fieldset>
+    <legend></legend>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">对口小学名称</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">对口小学全称</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">小村热门程度</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="form-group col-sm-3">
+        <div>
+            <label class="control-label">学区房备注</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+</fieldset>
+<fieldset>
+    <legend></legend>
+    <div class="col-sm-6">
+        <div>
+            <label class="control-label">备注说明</label>
+        </div>
+        <div>@Html.EditorFor(item => item.MobilePhone)</div>
+    </div>
+    <div class="col-sm-6">
+        @*@Html.Partial("~/Themes/Entrust/Shared/_OperationRecordPartial.cshtml")*@
+    </div>
+</fieldset>
+<script type="text/javascript">
+    var columns = [
+        { field: 'Id', title: 'id', 'class': 'hidden' },
+        { field: 'Number', title: '操作' },
+        { field: 'CountyName', title: '市' },
+        { field: 'DetailAddress', title: '区' },
+        { field: 'PropertyTypeName', title: '小区名称' },
+        { field: 'FloorAcreage', title: '小区地址' },
+        { field: 'AssessSinglePrice', title: '楼栋地址' },
+        { field: 'AssessTotalPrice', title: '单套地址' }
+    ];
+    @*var table = new TableInit('orientationTableGrid',
+        'SystemEntrustHistorySearchForm',
+        "@Url.Action("GetSystemEntrustHistoryList", "Entrust")",
+        columns);
+    window.dataGrid = table;
+    table.Init();*@
+</script>
